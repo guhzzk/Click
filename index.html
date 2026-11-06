@@ -1,55 +1,345 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SIGMA CLICKER 9000</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corteza Barbearia | O Estilo que você merece</title>
+    <!-- Google Fonts para tipografia marcante -->
+    <link rel="preconnect" href="https://googleapis.com">
+    <link rel="preconnect" href="https://gstatic.com" crossorigin>
+    <link href="https://googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+    <style>
+        /* Variáveis de Cor baseadas na identidade visual da Corteza */
+        :root {
+            --bg-creme: #F4F1EA;
+            --preto-solido: #111111;
+            --vermelho-corteza: #E1251B;
+            --cinza-suporte: #333333;
+            --branco: #FFFFFF;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-creme);
+            color: var(--preto-solido);
+        }
+
+        /* Navegação / Abas fixas */
+        header {
+            background-color: var(--bg-creme);
+            border-bottom: 2px solid var(--preto-solido);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+        }
+
+        .logo-text {
+            font-weight: 900;
+            font-size: 24px;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+
+        .logo-text span {
+            color: var(--vermelho-corteza);
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            text-transform: lowercase;
+            font-weight: 400;
+            margin-left: -2px;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--preto-solido);
+            font-weight: 700;
+            font-size: 14px;
+            margin-left: 20px;
+            text-transform: uppercase;
+            transition: color 0.3s;
+        }
+
+        nav a:hover, nav a.active {
+            color: var(--vermelho-corteza);
+        }
+
+        /* Layout de Seções / Páginas */
+        section {
+            padding: 100px 20px 60px 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .headline {
+            font-size: 48px;
+            font-weight: 900;
+            text-transform: uppercase;
+            text-align: center;
+            line-height: 1.1;
+            margin-bottom: 15px;
+        }
+
+        .subheadline {
+            font-size: 18px;
+            color: var(--cinza-suporte);
+            text-align: center;
+            margin-bottom: 30px;
+            max-width: 600px;
+        }
+
+        /* Botões de Ação (CTA) */
+        .btn-principal {
+            background-color: var(--preto-solido);
+            color: var(--branco);
+            padding: 15px 35px;
+            text-decoration: none;
+            font-weight: 700;
+            text-transform: uppercase;
+            border: 2px solid var(--preto-solido);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-principal:hover {
+            background-color: transparent;
+            color: var(--preto-solido);
+        }
+
+        .btn-secundario {
+            background-color: var(--vermelho-corteza);
+            color: var(--branco);
+            padding: 10px 20px;
+            text-decoration: none;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 12px;
+            display: inline-block;
+            transition: opacity 0.3s;
+        }
+
+        .btn-secundario:hover {
+            opacity: 0.9;
+        }
+
+        /* Grid de Cards para Clubes e Produtos */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            width: 100%;
+            margin-top: 30px;
+        }
+
+        .card {
+            background-color: var(--branco);
+            border: 2px solid var(--preto-solido);
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        .card-tag {
+            position: absolute;
+            top: -12px;
+            right: 15px;
+            background-color: var(--vermelho-corteza);
+            color: var(--branco);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 10px;
+            text-transform: uppercase;
+        }
+
+        .card h3 {
+            font-size: 20px;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .card .preco {
+            font-size: 32px;
+            font-weight: 900;
+            color: var(--vermelho-corteza);
+            margin: 15px 0;
+        }
+
+        .card ul {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+
+        .card ul li {
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: var(--cinza-suporte);
+        }
+
+        /* Estilo da Lista de Serviços Avulsos */
+        .lista-servicos {
+            width: 100%;
+            max-width: 800px;
+            margin-top: 20px;
+        }
+
+        .categoria-titulo {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--vermelho-corteza);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 30px 0 15px 0;
+            border-bottom: 1px solid var(--preto-solido);
+            padding-bottom: 5px;
+        }
+
+        .servico-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 12px;
+        }
+
+        .servico-nome {
+            font-weight: 700;
+            text-transform: uppercase;
+            background-color: var(--bg-creme);
+            padding-right: 10px;
+        }
+
+        .servico-linha {
+            flex-grow: 1;
+            border-bottom: 2px dotted #ccc;
+        }
+
+        .servico-preco {
+            font-weight: 900;
+            padding-left: 10px;
+        }
+
+        /* Caixa de Chat de IA no rodapé */
+        .ia-chat-box {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 320px;
+            background: var(--branco);
+            border: 2px solid var(--preto-solido);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ia-header {
+            background: var(--preto-solido);
+            color: var(--branco);
+            padding: 10px 15px;
+            font-weight: 700;
+            font-size: 12px;
+            text-transform: uppercase;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .ia-messages {
+            height: 200px;
+            padding: 15px;
+            font-size: 13px;
+            overflow-y: auto;
+            background: #fafafa;
+        }
+
+        .msg { margin-bottom: 10px; padding: 8px; border-radius: 4px; }
+        .msg.bot { background: var(--bg-creme); color: var(--preto-solido); }
+        .msg.user { background: var(--vermelho-corteza); color: var(--branco); text-align: right; }
+
+        .ia-input-area {
+            display: flex;
+            border-top: 2px solid var(--preto-solido);
+        }
+
+        .ia-input-area input {
+            flex-grow: 1;
+            border: none;
+            padding: 10px;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .ia-input-area button {
+            background: var(--preto-solido);
+            color: var(--branco);
+            border: none;
+            padding: 0 15px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .headline { font-size: 32px; }
+            nav { display: none; } /* Simplificado para o protótipo */
+            .ia-chat-box { width: 280px; }
+        }
+    </style>
 </head>
 <body>
 
-  <div id="floaters"></div>
+    <!-- Header Fixo que gerencia a navegação entre as Abas -->
+    <header>
+        <div class="nav-container">
+            <div class="logo-text">Corteza<span>barbearia</span></div>
+            <nav id="main-nav">
+                <a href="#inicio" class="active">Início</a>
+                <a href="#clube">Club Corteza</a>
+                <a href="#servicos">Serviços</a>
+                <a href="#produtos">Produtos</a>
+            </nav>
+        </div>
+    </header>
 
-  <header class="topbar">
-    <div class="brand">SIGMA CLICKER <span>9000</span></div>
-    <div class="topbar-right">
-      <div id="relicBadge" class="relic-badge">💎 0 relíquias</div>
-      <button id="resetBtn" class="reset-btn" title="Apagar tudo, inclusive relíquias">zerar tudo</button>
-    </div>
-  </header>
+    <!-- ABA 1: INÍCIO / HOME -->
+    <section id="inicio">
+        <h1 class="headline">O visual que impressiona.<br>O cuidado que o Guilherme garante.</h1>
+        <p class="subheadline">Estilo moderno, atendimento estritamente premium e estrutura sob medida para o homem moderno.</p>
+        <a href="#servicos" class="btn-principal">Ver Serviços & Combos</a>
+    </section>
 
-  <main class="stage">
-    <div class="score-wrap">
-      <div id="score" class="score">0</div>
-      <div class="score-label">pontos de rizz</div>
-      <div id="rateLabel" class="rate-label">+0/s automático</div>
-      <div id="comboLabel" class="combo-label"></div>
-    </div>
-
-    <button id="blob" class="blob" aria-label="clique aqui">
-      <span id="blobEmoji">🗿</span>
-    </button>
-
-    <div id="critBanner" class="crit-banner"></div>
-
-    <button id="ascendBtn" class="ascend-btn" hidden></button>
-  </main>
-
-  <section class="shop">
-    <div class="tabs" id="tabs">
-      <button class="tab active" data-tab="click">👊 clique</button>
-      <button class="tab" data-tab="auto">⚙️ automático</button>
-      <button class="tab" data-tab="luck">🍀 sorte</button>
-      <button class="tab" data-tab="relic">💎 relíquias</button>
-      <button class="tab" data-tab="ach">🏆 conquistas</button>
-    </div>
-    <div id="shopList" class="shop-list"></div>
-  </section>
-
-  <div id="toast" class="toast"></div>
-
-  <script src="script.js"></script>
-</body>
-</html>
+    <!-- ABA 2: CLUB CORTEZA (ASSINATURAS) -->
+    <section id="clube" style="border-top: 1px solid #ddd;">
+        <h2 class="headline">Club Corteza</h2>
+        <p class="subheadline">Venha quantas vezes quiser, mantenha a régua sempre atualizada e pague uma mensalidade fixa sem burocracia.</p>
+        
+        <div class="grid-container">
+            <div class="card">
+                <div>
+                    <h3>Club 2x</h3>
+                    <ul>
+                        <li>• Até 2 cortes de cabelo no mês</li>
