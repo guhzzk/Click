@@ -164,7 +164,17 @@ function renderProducts() {
    Só atualiza classes e textos — não redesenha os cards,
    assim as animações não se repetem a cada clique.
    ---------------------------------------------------------- */
-const cart = new Set();
+// A sacola fica salva no navegador: sobrevive a recarregar a página, voltar do
+// WhatsApp e ir/voltar entre as etapas. Só é esvaziada quando o agendamento é
+// confirmado ou quando o cliente toca em "Limpar sacola".
+const CART_KEY = 'corteza_sacola';
+const cart = new Set((store(CART_KEY) || []).filter((id) => ALL_ITEMS[id]));
+const saveCart = () => store(CART_KEY, [...cart]);
+
+function clearCart() {
+  cart.clear();
+  onCartChange(false);
+}
 
 function cartTotals() {
   const items = [...cart].map((id) => ALL_ITEMS[id]);
@@ -199,6 +209,8 @@ function syncCartBar(bump) {
 }
 
 function onCartChange(bump) {
+  saveCart();
+  $('#clearCart').hidden = cart.size === 0;
   syncSelection();
   syncCartBar(bump);
   if (typeof renderSummary === 'function') renderSummary();
@@ -219,6 +231,12 @@ function initCart() {
     const t = e.target.closest('[data-toggle]');
     if (t) toggleItem(t.dataset.toggle);
   });
+  $('#clearCart').addEventListener('click', () => {
+    if (!cart.size) return;
+    clearCart();
+    toast('Sacola esvaziada');
+  });
+  onCartChange(false); // aplica a sacola salva
   new IntersectionObserver(([en]) => { bookingInView = en.isIntersecting; syncCartBar(false); }, { threshold: 0.15 })
     .observe($('#agendar'));
   $('#cartGo').addEventListener('click', () => { if (bookingStep() === 'done') goStep(1); });

@@ -125,7 +125,7 @@ function goStep(n) {
   };
   if (from && from !== to && !reduceMotion()) {
     from.classList.add(forward ? 'leave-left' : 'leave-right');
-    setTimeout(show, 200);
+    setTimeout(show, 300); // mesmo tempo do .leave-* no CSS
   } else {
     show();
   }
@@ -219,6 +219,11 @@ function finishBooking(paidPix) {
   });
   store('corteza_ultimo_id', saved.id);
   saveClient();
+  // Agendamento confirmado: os itens já estão nele, então a sacola é liberada
+  cart.clear();
+  saveCart();
+  syncSelection();
+  syncCartBar(false);
 
   const url = whatsUrl(buildMessage(saved, paidPix));
   $('#doneText').textContent = `${formatDateLong(saved.date)} às ${saved.time} com o ${CONFIG.barber}. Envie a mensagem no WhatsApp para confirmar o horário.`;
@@ -239,9 +244,9 @@ function finishBooking(paidPix) {
   }, 1000);
 }
 
+/** Volta para a etapa 1 sem mexer na sacola */
 function resetBooking() {
   clearInterval(finishBooking._t);
-  cart.clear();
   booking.date = null;
   booking.time = null;
   onCartChange(false);

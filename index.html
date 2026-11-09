@@ -198,6 +198,7 @@
             <h3 class="step__title">O que vamos fazer hoje?</h3>
             <div class="picker" id="servicePicker"></div>
             <div class="step__nav">
+              <button class="btn btn--text" id="clearCart" type="button" hidden>Limpar sacola</button>
               <span></span>
               <button class="btn btn--dark" data-next>Continuar</button>
             </div>
@@ -470,6 +471,7 @@
       <div class="ptabs">
         <button class="ptab is-active" data-ptab="agenda">Agenda</button>
         <button class="ptab" data-ptab="novo">+ Novo horário</button>
+        <button class="ptab" data-ptab="renda">Renda</button>
       </div>
 
       <div data-ppane="agenda">
@@ -482,22 +484,41 @@
         <div id="panelList"></div>
       </div>
 
+      <div data-ppane="renda" hidden>
+        <div class="report-head">
+          <h3 class="serif">Relatório de renda</h3>
+          <div class="filters">
+            <button data-report="dia" class="is-active">Dia a dia</button>
+            <button data-report="semana">Semana a semana</button>
+            <button data-report="mes">Mês a mês</button>
+          </div>
+        </div>
+        <p class="demo-data" id="demoData"></p>
+        <div id="reportBody"></div>
+        <p class="fineprint">O faturamento soma o valor recebido de cada atendimento marcado como concluído, no dia em que foi concluído.</p>
+      </div>
+
       <div data-ppane="novo" hidden>
         <form id="newForm" class="newform" novalidate>
           <div class="seg">
             <label><input type="radio" name="nKind" value="agendamento" checked><span>Agendar cliente</span></label>
-            <label><input type="radio" name="nKind" value="bloqueio"><span>Bloquear horário</span></label>
+            <label><input type="radio" name="nKind" value="bloqueio"><span>Bloquear horários</span></label>
           </div>
           <div class="form">
             <label class="field">
               <span>Data</span>
               <input type="date" id="nDate" required>
             </label>
-            <label class="field">
+            <label class="field only-client">
               <span>Horário</span>
-              <select id="nTime" required></select>
+              <select id="nTime"></select>
             </label>
+            <div class="field only-block range">
+              <label><span>Horário de início</span><select id="nStart"></select></label>
+              <label><span>Horário de término</span><select id="nEnd"></select></label>
+            </div>
             <p class="field--full hint" id="nDateHint"></p>
+            <p class="field--full hint only-block" id="nRangeHint"></p>
             <label class="field only-client">
               <span>Nome do cliente</span>
               <input type="text" id="nName" placeholder="Ex.: João Silva">
@@ -520,6 +541,34 @@
       </div>
 
       <p class="fineprint">Modo demonstração: os dados ficam salvos neste navegador.</p>
+    </div>
+  </div>
+
+  <!-- Concluir atendimento -->
+  <div class="modal" id="doneModal" hidden>
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__card modal__card--left" role="dialog" aria-modal="true" aria-labelledby="doneTitle">
+      <button class="modal__close" data-close aria-label="Fechar">×</button>
+      <span class="kicker">Marcar como concluído</span>
+      <h3 class="serif" id="doneTitle">Atendimento finalizado</h3>
+      <p class="muted" id="doneWho"></p>
+      <p id="doneItems" class="done-items"></p>
+      <form id="doneForm" class="login" novalidate>
+        <label class="field field--full">
+          <span>Valor recebido (R$)</span>
+          <input type="text" id="doneAmount" inputmode="decimal" placeholder="0,00" required>
+        </label>
+        <p class="hint" id="doneAsk" hidden>Este atendimento tem serviço sob consulta: confira o valor cobrado.</p>
+        <label class="field field--full">
+          <span>Forma de pagamento</span>
+          <select id="doneMethod">
+            <option>Pix</option>
+            <option>Dinheiro</option>
+            <option>Cartão</option>
+          </select>
+        </label>
+        <button class="btn btn--green btn--block" type="submit">Concluir e somar ao faturamento</button>
+      </form>
     </div>
   </div>
 
