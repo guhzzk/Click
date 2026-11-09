@@ -96,7 +96,7 @@ function store(key, val) {
   return val;
 }
 
-/** Máscara (21) 99999-9999 */
+/** Máscara (41) 99999-9999 */
 function maskPhone(input) {
   input.addEventListener('input', () => {
     let v = input.value.replace(/\D/g, '').slice(0, 11);

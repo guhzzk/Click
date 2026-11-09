@@ -1,6 +1,6 @@
 # Corteza Barbearia
 
-Landing page da **Corteza Barbearia** (R. Mieceslau Jasiocha, 66 · Thomaz Coelho).
+Landing page da **Corteza Barbearia** (R. Mieceslau Jasiocha, 66 · Thomaz Coelho · Araucária - PR · 83707-200).
 Site estático: abra o `index.html` ou publique com o GitHub Pages.
 
 ## Funções
