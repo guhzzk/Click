@@ -28,6 +28,17 @@ Site estático: abra o `index.html` ou publique com o GitHub Pages.
 > Para o barbeiro ver no celular dele o que o cliente agendou no celular do cliente,
 > é preciso ligar o site a um backend (ex.: Firebase ou Supabase).
 
+## Modo demonstração (upgrade premium)
+Com `demoMode: true` em `js/config.js`, o site mostra recursos simulados para apresentar o upgrade:
+
+- **Pix com confirmação automática:** depois de copiar o código, aparece "Aguardando pagamento…" e, em 5 s, "Pagamento Confirmado com Sucesso! 🎉" (webhook simulado). Só roda sem chave Pix real.
+- **Fila de espera:** o próximo sábado aparece lotado e o cliente pode entrar na fila (manhã/tarde). O barbeiro vê a fila na aba Agenda do painel.
+- **Assistente de IA & WhatsApp:** aba no painel com conversa simulada, log de atividades e botão de ativar/pausar.
+- **Encaixe Inteligente:** botão em "+ Novo horário" que mostra brechas de 15 min sugeridas.
+
+Nada disso tem integração real: antes de abrir o site para clientes, coloque `demoMode: false`.
+Sem o modo demonstração, a fila de espera continua funcionando de verdade (aparece só em dias realmente lotados e envia o pedido pelo WhatsApp da barbearia).
+
 ## Antes de publicar
 Edite `js/config.js`:
 
@@ -53,6 +64,7 @@ js/site.js        seções, carrinho e animações
 js/booking.js     agendamento e Pix
 js/auth.js        login e área do cliente
 js/panel.js       painel do barbeiro
+js/premium.js     recursos premium (Pix automático, fila, IA, encaixe)
 js/main.js        inicialização
 vendor/qrcode.js  gerador de QR Code (MIT)
 ```

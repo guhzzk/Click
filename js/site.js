@@ -141,8 +141,9 @@ function initPlans() {
     if (p) {
       const plan = PLANS[p.dataset.kind].find((x) => x.id === p.dataset.planPix);
       const label = planLabel(p.dataset.kind, plan);
-      openPix(plan.price, `Assinatura ${label}`, () => {
-        window.open(whatsUrl(`Olá! Acabei de pagar via Pix a assinatura do plano *${label}* (${brl(plan.price)}) pelo site. Segue o comprovante. 💈`), '_blank');
+      openPix(plan.price, `Assinatura ${label}`, ({ auto }) => {
+        const proof = auto ? 'O pagamento foi confirmado automaticamente pelo site.' : 'Segue o comprovante.';
+        window.open(whatsUrl(`Olá! Acabei de pagar via Pix a assinatura do plano *${label}* (${brl(plan.price)}) pelo site. ${proof} 💈`), '_blank');
       });
     }
   });

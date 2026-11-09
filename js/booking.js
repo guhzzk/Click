@@ -28,9 +28,9 @@ function renderPicker() {
 /* ----------------------------------------------------------
    ETAPA 2 — dia e horário
    ---------------------------------------------------------- */
-/** Horários livres de um dia (sem passados e sem ocupados) */
+/** Horários livres de um dia (sem passados, ocupados ou dia lotado) */
 function freeSlots(iso) {
-  return daySlots(iso).filter((m) => !isPastSlot(iso, m) && !DB.isTaken(iso, toHHMM(m)));
+  return daySlots(iso).filter((m) => !isPastSlot(iso, m) && !slotUnavailable(iso, toHHMM(m)));
 }
 
 function renderDays() {
@@ -42,30 +42,42 @@ function renderDays() {
     if (i === 0 && freeSlots(d.iso).length === 0) continue; // hoje sem horários
     days.push({ ...d, today: i === 0, tomorrow: i === 1 });
   }
-  $('#daysList').innerHTML = days.map((d) => `
-    <button class="day ${booking.date === d.iso ? 'is-on' : ''}" data-day="${d.iso}">
+  $('#daysList').innerHTML = days.map((d) => {
+    const full = isDayFull(d.iso);
+    return `
+    <button class="day ${booking.date === d.iso ? 'is-on' : ''} ${full ? 'day--full' : ''}" data-day="${d.iso}">
       <span>${d.today ? 'hoje' : d.tomorrow ? 'amanhã' : WEEK_SHORT[d.dow]}</span>
       <b>${pad(d.d)}</b>
       <span>${MONTH_SHORT[d.m]}</span>
-    </button>`).join('');
+      ${full ? '<em class="day__tag">lotado</em>' : ''}
+    </button>`;
+  }).join('');
 }
 
 function renderSlots() {
   const box = $('#slotsList');
-  if (!booking.date) { box.innerHTML = '<p class="muted">Selecione um dia primeiro.</p>'; return; }
+  if (!booking.date) {
+    box.innerHTML = '<p class="muted">Selecione um dia primeiro.</p>';
+    Waitlist.render(null, false);
+    return;
+  }
   // Se o horário escolhido já passou ou foi ocupado, limpa a escolha
-  if (booking.time && (isPastSlot(booking.date, toMinutes(booking.time)) || DB.isTaken(booking.date, booking.time))) {
+  if (booking.time && (isPastSlot(booking.date, toMinutes(booking.time)) || slotUnavailable(booking.date, booking.time))) {
     booking.time = null;
     toast('O horário escolhido não está mais disponível. Escolha outro.');
   }
+  const full = isDayFull(booking.date);
+  box.classList.toggle('slots--full', full);
   let html = '';
   daySlots(booking.date).forEach((m, i) => {
     if (isPastSlot(booking.date, m)) return; // horários que já passaram não aparecem
     const label = toHHMM(m);
-    const taken = DB.isTaken(booking.date, label);
-    html += `<button class="slot ${booking.time === label ? 'is-on' : ''}" data-slot="${label}" style="--i:${i}" ${taken ? 'disabled title="Ocupado"' : ''}>${label}</button>`;
+    const taken = slotUnavailable(booking.date, label);
+    html += `<button class="slot ${booking.time === label ? 'is-on' : ''} ${full ? 'slot--full' : ''}" data-slot="${label}" style="--i:${i}" ${taken ? `disabled title="${full ? 'Lotado' : 'Ocupado'}"` : ''}>${label}</button>`;
   });
-  box.innerHTML = html || '<p class="muted">Não há mais horários livres neste dia. Escolha outro.</p>';
+  box.innerHTML = (full ? '<p class="slots__full-note">Todos os horários deste dia já foram reservados.</p>' : '')
+    + (html || '<p class="muted">Não há mais horários livres neste dia. Escolha outro.</p>');
+  Waitlist.render(booking.date, full);
 }
 
 /* ----------------------------------------------------------
@@ -139,7 +151,7 @@ function validate(step) {
   if (step === 1 && ![...cart].some((id) => ALL_ITEMS[id].type === 'servico')) { toast('Adicione um serviço para agendar'); return false; }
   if (step === 2 && !booking.date) { toast('Escolha o dia'); return false; }
   if (step === 2 && !booking.time) { toast('Escolha o horário'); return false; }
-  if (step === 2 && (isPastSlot(booking.date, toMinutes(booking.time)) || DB.isTaken(booking.date, booking.time))) {
+  if (step === 2 && (isPastSlot(booking.date, toMinutes(booking.time)) || slotUnavailable(booking.date, booking.time))) {
     booking.time = null;
     toast('Esse horário não está mais disponível. Escolha outro.');
     if (booking.step !== 2) goStep(2); else renderSlots();
@@ -175,7 +187,7 @@ function fillClient() {
 /* ----------------------------------------------------------
    MENSAGEM DO WHATSAPP E FINALIZAÇÃO
    ---------------------------------------------------------- */
-function buildMessage(b, paidPix) {
+function buildMessage(b, paidPix, autoPix) {
   const items = b.items.map((id) => ALL_ITEMS[id]);
   const servs = items.filter((i) => i.type === 'servico');
   const prods = items.filter((i) => i.type === 'produto');
@@ -198,11 +210,12 @@ function buildMessage(b, paidPix) {
     `💰 *Total:* ${b.total ? brl(b.total) : 'sob consulta'}${b.total && b.ask ? ' + itens sob consulta' : ''}`,
     `💳 *Forma de Pagamento:* ${b.pay === 'pix' ? 'Pix pelo Site' : 'Pagar na Barbearia'}`,
   );
-  if (b.pay === 'pix' && paidPix) lines.push('', '_Segue o comprovante do Pix._');
+  if (b.pay === 'pix' && autoPix) lines.push('', '✅ *Pix confirmado automaticamente pelo site.*');
+  else if (b.pay === 'pix' && paidPix) lines.push('', '_Segue o comprovante do Pix._');
   return lines.join('\n');
 }
 
-function finishBooking(paidPix) {
+function finishBooking(paidPix, autoPix) {
   const { total, ask } = cartTotals();
   const user = Auth.user();
   const saved = DB.add({
@@ -212,6 +225,7 @@ function finishBooking(paidPix) {
     total, ask,
     pay: $('input[name="pay"]:checked').value,
     paid: !!paidPix,
+    pixAuto: !!autoPix,
     name: $('#fName').value.trim(),
     phone: $('#fPhone').value.trim(),
     userEmail: user && user.role === 'cliente' ? user.email : null,
@@ -225,7 +239,7 @@ function finishBooking(paidPix) {
   syncSelection();
   syncCartBar(false);
 
-  const url = whatsUrl(buildMessage(saved, paidPix));
+  const url = whatsUrl(buildMessage(saved, paidPix, autoPix));
   $('#doneText').textContent = `${formatDateLong(saved.date)} às ${saved.time} com o ${CONFIG.barber}. Envie a mensagem no WhatsApp para confirmar o horário.`;
   $('#doneWhats').href = url;
   goStep('done');
@@ -289,7 +303,7 @@ function initBooking() {
     const pay = $('input[name="pay"]:checked').value;
     const { total } = cartTotals();
     if (pay === 'pix' && total > 0) {
-      openPix(total, `Agendamento ${formatDateLong(booking.date)} às ${booking.time}`, () => finishBooking(true));
+      openPix(total, `Agendamento ${formatDateLong(booking.date)} às ${booking.time}`, ({ auto }) => finishBooking(true, auto));
     } else {
       finishBooking(false);
     }
@@ -336,7 +350,9 @@ function openPix(amount, desc, onDone) {
   const code = pixPayload(amount, demo ? 'chave-pix-demonstracao' : CONFIG.pixKey);
   pixDoneCb = onDone;
   $('#pixTitle').textContent = brl(amount);
-  $('#pixDesc').innerHTML = `${esc(desc)}${demo ? '<br><strong class="demo-note">Modo demonstração: configure a chave Pix em js/config.js.</strong>' : ''}`;
+  // Na apresentação (demoMode) o aviso some; fora dela, lembra de configurar a chave
+  $('#pixDesc').innerHTML = `${esc(desc)}${demo && !isDemo() ? '<br><strong class="demo-note">Configure a chave Pix em js/config.js.</strong>' : ''}`;
+  PixWatch.reset();
   $('#pixCode').value = code;
   const btn = $('#pixCopy');
   btn.textContent = 'Copiar código';
@@ -354,7 +370,7 @@ function openPix(amount, desc, onDone) {
 
 function initPix() {
   const modal = $('#pixModal');
-  $$('[data-close]', modal).forEach((b) => b.addEventListener('click', () => closeModal(modal)));
+  $$('[data-close]', modal).forEach((b) => b.addEventListener('click', () => { PixWatch.stop(); closeModal(modal); }));
   $('#pixCopy').addEventListener('click', async (e) => {
     const btn = e.currentTarget;
     const code = $('#pixCode').value;
@@ -372,9 +388,17 @@ function initPix() {
     btn.textContent = ok ? '✅ Copiado!' : 'Selecione e copie o código acima';
     btn.classList.toggle('is-copied', ok);
     btn._t = setTimeout(() => { btn.textContent = 'Copiar código'; btn.classList.remove('is-copied'); }, 2000);
+    PixWatch.start(); // demonstração: "Aguardando pagamento…" e confirmação automática
   });
+  // Pagamento informado manualmente (comprovante pelo WhatsApp)
   $('#pixDone').addEventListener('click', () => {
+    PixWatch.stop();
     closeModal(modal);
-    if (pixDoneCb) pixDoneCb();
+    if (pixDoneCb) pixDoneCb({ auto: false });
+  });
+  // Pagamento detectado automaticamente
+  $('#pixContinue').addEventListener('click', () => {
+    closeModal(modal);
+    if (pixDoneCb) pixDoneCb({ auto: true });
   });
 }
