@@ -2,8 +2,7 @@
    Recursos premium (modo demonstração)
    1) Pix com confirmação automática (webhook simulado)
    2) Fila de espera para dias lotados
-   3) Assistente de IA & WhatsApp (painel do barbeiro)
-   4) Encaixe Inteligente (painel do barbeiro)
+   3) Encaixe Inteligente (painel do barbeiro)
 
    Tudo aqui é simulado no navegador para apresentar o upgrade.
    As simulações só rodam com CONFIG.demoMode = true.
@@ -235,132 +234,7 @@ const Waitlist = (() => {
 })();
 
 /* ==========================================================
-   3) ASSISTENTE DE IA & WHATSAPP (painel do barbeiro)
-   ========================================================== */
-const AI = (() => {
-  const KEY = 'corteza_ia_ativa';
-  let run = 0; // muda a cada (re)início: cancela a reprodução anterior
-
-  const SCRIPT = [
-    { from: 'client', text: 'Guilherme, tem vaga para hoje às 17h?', time: '16:58', wait: 700 },
-    { from: 'bot', text: 'Olá! O horário das 17h já está ocupado, mas consegui um encaixe para você às 17h45. Deseja confirmar?', time: '16:58', typing: 1900 },
-    { from: 'client', text: 'Quero sim!', time: '16:59', wait: 1500 },
-    { from: 'bot', text: 'Perfeito! Agendamento realizado e atualizado no seu painel. 🚀', time: '16:59', typing: 1500 },
-  ];
-
-  const LOG = [
-    { time: '16:40', icon: '🔔', text: 'Lembrete de horário enviado para 5 clientes de amanhã' },
-    { time: '16:12', icon: '📅', text: 'Vaga de sábado oferecida para a fila de espera (2 pessoas)' },
-    { time: '15:30', icon: '🔁', text: 'Diego reagendado de 15:00 para 16:30, a pedido dele' },
-    { time: '14:05', icon: '💬', text: 'Dúvida sobre o Club ONE respondida, com o link do plano' },
-    { time: '11:22', icon: '✅', text: 'Bruno confirmou presença para amanhã às 10:00' },
-  ];
-
-  const active = () => store(KEY) !== false;
-  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-  const alive = (id) => id === run && !$('#panel').hidden && admin.view === 'automacao' && active();
-
-  function renderSwitch() {
-    const on = active();
-    const sw = $('#aiSwitch');
-    sw.classList.toggle('is-on', on);
-    sw.setAttribute('aria-checked', String(on));
-    $('#aiStatusText').textContent = on ? 'Ativo' : 'Pausado';
-    $('.ai').classList.toggle('is-paused', !on);
-    $('#aiPeerStatus').textContent = on ? 'online' : 'assistente pausado';
-  }
-
-  function renderLog(extra) {
-    const items = extra ? [extra, ...LOG] : LOG;
-    $('#aiLog').innerHTML = items.map((l, i) => `
-      <li class="ai-log__item ${i === 0 && extra ? 'is-new' : ''}">
-        <span class="ai-log__icon" aria-hidden="true">${l.icon}</span>
-        <span class="ai-log__text">${esc(l.text)}</span>
-        <time>${l.time}</time>
-      </li>`).join('');
-  }
-
-  function bubble(msg) {
-    const div = document.createElement('div');
-    div.className = `ai-msg ai-msg--${msg.from}`;
-    div.innerHTML = `<p>${esc(msg.text)}</p><span class="ai-msg__meta">${msg.time}${msg.from === 'bot' ? ' <i class="ai-ticks">✓✓</i>' : ''}</span>`;
-    return div;
-  }
-
-  function scrollChat() {
-    const chat = $('#aiChat');
-    chat.scrollTo({ top: chat.scrollHeight, behavior: reduceMotion() ? 'auto' : 'smooth' });
-  }
-
-  /** Reproduz a conversa com indicador de "digitando…" */
-  async function play() {
-    const id = ++run;
-    const chat = $('#aiChat');
-    chat.innerHTML = '<div class="ai-day">Hoje</div>';
-    renderLog();
-    $('#aiReplay').hidden = true;
-    await sleep(500);
-
-    for (const msg of SCRIPT) {
-      if (!alive(id)) return;
-      if (msg.from === 'bot') {
-        $('#aiPeerStatus').textContent = 'Assistente IA digitando…';
-        const typing = document.createElement('div');
-        typing.className = 'ai-msg ai-msg--bot ai-typing';
-        typing.innerHTML = '<span></span><span></span><span></span>';
-        chat.appendChild(typing);
-        scrollChat();
-        await sleep(msg.typing);
-        typing.remove();
-        if (!alive(id)) return;
-        $('#aiPeerStatus').textContent = 'online';
-      } else {
-        await sleep(msg.wait);
-        if (!alive(id)) return;
-      }
-      chat.appendChild(bubble(msg));
-      scrollChat();
-    }
-
-    await sleep(700);
-    if (!alive(id)) return;
-    const evt = document.createElement('div');
-    evt.className = 'ai-event';
-    evt.innerHTML = '📌 <b>Agendamento criado no painel</b><span>Rafael · hoje, 17:45 · Corte · encaixe inteligente</span>';
-    chat.appendChild(evt);
-    scrollChat();
-    renderLog({ time: 'agora', icon: '⚡', text: 'Encaixe às 17:45 confirmado para Rafael pelo WhatsApp' });
-    $('#aiReplay').hidden = false;
-  }
-
-  function stop() { run++; }
-
-  function start() {
-    renderSwitch();
-    if (active()) play();
-    else {
-      stop();
-      renderLog({ time: 'agora', icon: '⏸️', text: 'Assistente pausado: novas mensagens ficam para você responder' });
-    }
-  }
-
-  function toggle() {
-    store(KEY, !active());
-    toast(active() ? 'Assistente de IA ativado 🤖' : 'Assistente de IA pausado');
-    start();
-  }
-
-  function init() {
-    $('#aiSwitch').addEventListener('click', toggle);
-    $('#aiReplay').addEventListener('click', play);
-    renderSwitch();
-  }
-
-  return { init, start, stop };
-})();
-
-/* ==========================================================
-   4) ENCAIXE INTELIGENTE (painel do barbeiro)
+   3) ENCAIXE INTELIGENTE (painel do barbeiro)
    ========================================================== */
 const SmartFit = (() => {
   const KEY = 'corteza_encaixe';
@@ -433,7 +307,6 @@ function renderWaitlistPanel() {
 
 function initPremium() {
   Waitlist.init();
-  AI.init();
   SmartFit.init();
   $('#panelWaitlist').addEventListener('click', (e) => {
     const r = e.target.closest('[data-wl-remove]');
