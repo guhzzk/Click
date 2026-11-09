@@ -11,9 +11,9 @@ const CONFIG = {
   // Enquanto estiver vazia, o Pix funciona em modo demonstração.
   pixKey: '',
   pixName: 'CORTEZA BARBEARIA', // até 25 caracteres, sem acento
-  pixCity: 'RIO DE JANEIRO',    // até 15 caracteres, sem acento
+  pixCity: 'ARAUCARIA',         // até 15 caracteres, sem acento
   barber: 'Guilherme',
-  address: 'R. Mieceslau Jasiocha, 66 - Thomaz Coelho, Rio de Janeiro - RJ',
+  address: 'R. Mieceslau Jasiocha, 66 - Thomaz Coelho, Araucária - PR, 83707-200',
   // Opcional: coordenadas exatas da porta (deixam a rota do Maps/Waze mais precisa).
   // Ex.: { lat: -22.8370, lng: -43.3270 }. Com null, a rota usa o endereço acima.
   coords: null,
@@ -33,7 +33,7 @@ const CONFIG = {
 const USERS = [
   {
     user: 'cliente1', email: 'cliente1@corteza.com', password: 'cliente1',
-    name: 'Cliente 1', phone: '(21) 90000-0001', role: 'cliente',
+    name: 'Cliente 1', phone: '(41) 90000-0001', role: 'cliente',
   },
   {
     user: 'barbeiro1', email: 'barbeiro1@corteza.com', password: 'barbeiro1',

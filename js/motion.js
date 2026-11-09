@@ -3,7 +3,6 @@
    - Reveal que se repete sempre que o elemento volta à tela
    - Troca de abas com saída/entrada em cascata e altura suave
    - Pílula deslizante nas abas
-   - Inclinação 3D com reflexo nos cards (mouse/trackpad)
    - Item "voando" até a sacola ao adicionar
    ========================================================== */
 
@@ -14,7 +13,6 @@ const MOTION = {
 };
 
 const canAnimate = () => !reduceMotion() && 'IntersectionObserver' in window;
-const finePointer = () => window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
 /* ----------------------------------------------------------
    REVEAL REPETÍVEL
@@ -73,7 +71,7 @@ const Reveal = (() => {
    TROCA DE CONTEÚDO COM TRANSIÇÃO (abas de serviços e planos)
    ---------------------------------------------------------- */
 function swapContent(container, render) {
-  const done = () => { Reveal.observe(container); initTilt(container); };
+  const done = () => Reveal.observe(container);
   if (!canAnimate() || !container.children.length) { render(); done(); return; }
 
   clearTimeout(container._leaveT);
@@ -119,41 +117,6 @@ function initTabPill(bar, activeSel) {
   window.addEventListener('resize', () => move(true));
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => move(true));
   return () => move(false);
-}
-
-/* ----------------------------------------------------------
-   INCLINAÇÃO 3D + REFLEXO (só com mouse/trackpad)
-   ---------------------------------------------------------- */
-const TILT_MAX = 7; // graus
-
-function initTilt(root = document) {
-  if (reduceMotion() || !finePointer()) return;
-  root.querySelectorAll('.tilt:not([data-tilt])').forEach((card) => {
-    card.dataset.tilt = '1';
-    let raf = 0;
-
-    card.addEventListener('pointermove', (e) => {
-      if (e.pointerType !== 'mouse') return;
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        const r = card.getBoundingClientRect();
-        const px = (e.clientX - r.left) / r.width;   // 0..1
-        const py = (e.clientY - r.top) / r.height;   // 0..1
-        card.classList.add('is-tilting');
-        card.style.setProperty('--ry', `${(px - 0.5) * 2 * TILT_MAX}deg`);
-        card.style.setProperty('--rx', `${(0.5 - py) * 2 * TILT_MAX}deg`);
-        card.style.setProperty('--mx', `${px * 100}%`);
-        card.style.setProperty('--my', `${py * 100}%`);
-      });
-    });
-
-    card.addEventListener('pointerleave', () => {
-      cancelAnimationFrame(raf);
-      card.classList.remove('is-tilting');
-      card.style.setProperty('--rx', '0deg');
-      card.style.setProperty('--ry', '0deg');
-    });
-  });
 }
 
 /* ----------------------------------------------------------

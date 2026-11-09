@@ -66,7 +66,7 @@ function initStatus() {
    ---------------------------------------------------------- */
 function renderServices(tab) {
   $('#servicesGrid').innerHTML = SERVICES[tab].map((s, i) => `
-    <article class="service reveal tilt" data-id="${s.id}" style="--i:${i}">
+    <article class="service reveal" data-id="${s.id}" style="--i:${i}">
       <span class="service__tag">${TAB_LABEL[tab]}</span>
       <h3 class="service__name">${s.name}</h3>
       ${s.art ? `<button class="service__art" data-art="${s.art}" data-alt="${s.name}">ver arte</button>` : ''}
@@ -82,7 +82,6 @@ function initServices() {
   const grid = $('#servicesGrid');
   renderServices('avulsos');
   Reveal.observe(grid);
-  initTilt(grid);
   const movePill = initTabPill($('.tabs'), '.tab.is-active');
   $$('.tab').forEach((t) => t.addEventListener('click', () => {
     if (t.classList.contains('is-active')) return;
@@ -98,7 +97,7 @@ function initServices() {
 function renderPlans(kind) {
   const meta = PLAN_META[kind];
   $('#plansGrid').innerHTML = PLANS[kind].map((p, i) => `
-    <article class="plan plan--${kind} reveal tilt" style="--i:${i}">
+    <article class="plan plan--${kind} reveal" style="--i:${i}">
       <div class="plan__top">
         <div class="plan__club">${meta.club}</div>
         <div class="plan__name">${p.club || meta.name}</div>
@@ -125,7 +124,6 @@ function initPlans() {
   const grid = $('#plansGrid');
   renderPlans('one');
   Reveal.observe(grid);
-  initTilt(grid);
   const movePill = initTabPill($('.club-tabs'), '.club-tab.is-active');
   $$('.club-tab').forEach((t) => t.addEventListener('click', () => {
     if (t.classList.contains('is-active')) return;
@@ -155,7 +153,7 @@ function initPlans() {
    ---------------------------------------------------------- */
 function renderProducts() {
   $('#productsGrid').innerHTML = PRODUCTS.map((p, i) => `
-    <article class="product reveal tilt" data-id="${p.id}" style="--i:${i}">
+    <article class="product reveal" data-id="${p.id}" style="--i:${i}">
       <div class="product__img" data-art="${p.img}" data-alt="${p.name}">
         <img src="${p.img}" alt="${p.name} El Guapo" loading="lazy" width="400" height="400" class="fade-img">
       </div>
@@ -311,10 +309,9 @@ function initLightbox() {
    ANIMAÇÕES
    ---------------------------------------------------------- */
 
-/** Liga o reveal repetível e a inclinação 3D em toda a página (ver js/motion.js) */
+/** Liga o reveal repetível em toda a página (ver js/motion.js) */
 function initReveal() {
   Reveal.observe(document);
-  initTilt(document);
 }
 
 /** Imagens aparecem com fade quando terminam de carregar */
