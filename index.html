@@ -1,345 +1,408 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Corteza Barbearia | O Estilo que você merece</title>
-    <!-- Google Fonts para tipografia marcante -->
-    <link rel="preconnect" href="https://googleapis.com">
-    <link rel="preconnect" href="https://gstatic.com" crossorigin>
-    <link href="https://googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
-    <style>
-        /* Variáveis de Cor baseadas na identidade visual da Corteza */
-        :root {
-            --bg-creme: #F4F1EA;
-            --preto-solido: #111111;
-            --vermelho-corteza: #E1251B;
-            --cinza-suporte: #333333;
-            --branco: #FFFFFF;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Corteza Barbearia | Thomaz Coelho</title>
+  <meta name="description" content="Corteza Barbearia em Thomaz Coelho. Corte, barba, sobrancelha, combos e planos de assinatura Club Corteza. Agende online e confirme pelo WhatsApp.">
+  <meta name="theme-color" content="#141414">
+  <meta property="og:title" content="Corteza Barbearia">
+  <meta property="og:description" content="Agende seu horário online. Café cortesia e geladeira liberada pra você esperar com estilo.">
+  <meta property="og:image" content="images/barbearia/banner-corteza.webp">
+  <link rel="icon" type="image/png" href="images/barbearia/logo-corteza.png">
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Montserrat', sans-serif;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            background-color: var(--bg-creme);
-            color: var(--preto-solido);
-        }
-
-        /* Navegação / Abas fixas */
-        header {
-            background-color: var(--bg-creme);
-            border-bottom: 2px solid var(--preto-solido);
-            position: fixed;
-            width: 100%;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-        }
-
-        .logo-text {
-            font-weight: 900;
-            font-size: 24px;
-            letter-spacing: -1px;
-            text-transform: uppercase;
-        }
-
-        .logo-text span {
-            color: var(--vermelho-corteza);
-            font-family: 'Playfair Display', serif;
-            font-style: italic;
-            text-transform: lowercase;
-            font-weight: 400;
-            margin-left: -2px;
-        }
-
-        nav a {
-            text-decoration: none;
-            color: var(--preto-solido);
-            font-weight: 700;
-            font-size: 14px;
-            margin-left: 20px;
-            text-transform: uppercase;
-            transition: color 0.3s;
-        }
-
-        nav a:hover, nav a.active {
-            color: var(--vermelho-corteza);
-        }
-
-        /* Layout de Seções / Páginas */
-        section {
-            padding: 100px 20px 60px 20px;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .headline {
-            font-size: 48px;
-            font-weight: 900;
-            text-transform: uppercase;
-            text-align: center;
-            line-height: 1.1;
-            margin-bottom: 15px;
-        }
-
-        .subheadline {
-            font-size: 18px;
-            color: var(--cinza-suporte);
-            text-align: center;
-            margin-bottom: 30px;
-            max-width: 600px;
-        }
-
-        /* Botões de Ação (CTA) */
-        .btn-principal {
-            background-color: var(--preto-solido);
-            color: var(--branco);
-            padding: 15px 35px;
-            text-decoration: none;
-            font-weight: 700;
-            text-transform: uppercase;
-            border: 2px solid var(--preto-solido);
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .btn-principal:hover {
-            background-color: transparent;
-            color: var(--preto-solido);
-        }
-
-        .btn-secundario {
-            background-color: var(--vermelho-corteza);
-            color: var(--branco);
-            padding: 10px 20px;
-            text-decoration: none;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 12px;
-            display: inline-block;
-            transition: opacity 0.3s;
-        }
-
-        .btn-secundario:hover {
-            opacity: 0.9;
-        }
-
-        /* Grid de Cards para Clubes e Produtos */
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            width: 100%;
-            margin-top: 30px;
-        }
-
-        .card {
-            background-color: var(--branco);
-            border: 2px solid var(--preto-solido);
-            padding: 25px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            position: relative;
-        }
-
-        .card-tag {
-            position: absolute;
-            top: -12px;
-            right: 15px;
-            background-color: var(--vermelho-corteza);
-            color: var(--branco);
-            font-size: 10px;
-            font-weight: 700;
-            padding: 4px 10px;
-            text-transform: uppercase;
-        }
-
-        .card h3 {
-            font-size: 20px;
-            font-weight: 900;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-        }
-
-        .card .preco {
-            font-size: 32px;
-            font-weight: 900;
-            color: var(--vermelho-corteza);
-            margin: 15px 0;
-        }
-
-        .card ul {
-            list-style: none;
-            margin-bottom: 20px;
-        }
-
-        .card ul li {
-            font-size: 14px;
-            margin-bottom: 8px;
-            color: var(--cinza-suporte);
-        }
-
-        /* Estilo da Lista de Serviços Avulsos */
-        .lista-servicos {
-            width: 100%;
-            max-width: 800px;
-            margin-top: 20px;
-        }
-
-        .categoria-titulo {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--vermelho-corteza);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin: 30px 0 15px 0;
-            border-bottom: 1px solid var(--preto-solido);
-            padding-bottom: 5px;
-        }
-
-        .servico-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 12px;
-        }
-
-        .servico-nome {
-            font-weight: 700;
-            text-transform: uppercase;
-            background-color: var(--bg-creme);
-            padding-right: 10px;
-        }
-
-        .servico-linha {
-            flex-grow: 1;
-            border-bottom: 2px dotted #ccc;
-        }
-
-        .servico-preco {
-            font-weight: 900;
-            padding-left: 10px;
-        }
-
-        /* Caixa de Chat de IA no rodapé */
-        .ia-chat-box {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 320px;
-            background: var(--branco);
-            border: 2px solid var(--preto-solido);
-            z-index: 2000;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .ia-header {
-            background: var(--preto-solido);
-            color: var(--branco);
-            padding: 10px 15px;
-            font-weight: 700;
-            font-size: 12px;
-            text-transform: uppercase;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .ia-messages {
-            height: 200px;
-            padding: 15px;
-            font-size: 13px;
-            overflow-y: auto;
-            background: #fafafa;
-        }
-
-        .msg { margin-bottom: 10px; padding: 8px; border-radius: 4px; }
-        .msg.bot { background: var(--bg-creme); color: var(--preto-solido); }
-        .msg.user { background: var(--vermelho-corteza); color: var(--branco); text-align: right; }
-
-        .ia-input-area {
-            display: flex;
-            border-top: 2px solid var(--preto-solido);
-        }
-
-        .ia-input-area input {
-            flex-grow: 1;
-            border: none;
-            padding: 10px;
-            font-size: 13px;
-            outline: none;
-        }
-
-        .ia-input-area button {
-            background: var(--preto-solido);
-            color: var(--branco);
-            border: none;
-            padding: 0 15px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        /* Responsividade */
-        @media (max-width: 768px) {
-            .headline { font-size: 32px; }
-            nav { display: none; } /* Simplificado para o protótipo */
-            .ia-chat-box { width: 280px; }
-        }
-    </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- Header Fixo que gerencia a navegação entre as Abas -->
-    <header>
-        <div class="nav-container">
-            <div class="logo-text">Corteza<span>barbearia</span></div>
-            <nav id="main-nav">
-                <a href="#inicio" class="active">Início</a>
-                <a href="#clube">Club Corteza</a>
-                <a href="#servicos">Serviços</a>
-                <a href="#produtos">Produtos</a>
-            </nav>
-        </div>
-    </header>
+  <!-- Aviso de próximo agendamento (preenchido via JS) -->
+  <div class="next-booking" id="nextBooking" hidden></div>
 
-    <!-- ABA 1: INÍCIO / HOME -->
-    <section id="inicio">
-        <h1 class="headline">O visual que impressiona.<br>O cuidado que o Guilherme garante.</h1>
-        <p class="subheadline">Estilo moderno, atendimento estritamente premium e estrutura sob medida para o homem moderno.</p>
-        <a href="#servicos" class="btn-principal">Ver Serviços & Combos</a>
+  <!-- ============ HEADER ============ -->
+  <header class="header" id="header">
+    <div class="container header__inner">
+      <a href="#inicio" class="header__logo" aria-label="Corteza Barbearia - início">
+        <img src="images/barbearia/logo-corteza.png" alt="Corteza Barbearia" width="136" height="42">
+      </a>
+
+      <nav class="nav" id="nav" aria-label="Navegação principal">
+        <a href="#servicos">Serviços</a>
+        <a href="#club">Club Corteza</a>
+        <a href="#produtos">Produtos</a>
+        <a href="#experiencia">Experiência</a>
+        <a href="#local">Local</a>
+        <a href="#agendar" class="btn btn--red nav__cta">Agendar horário</a>
+      </nav>
+
+      <button class="burger" id="burger" aria-label="Abrir menu" aria-expanded="false" aria-controls="nav">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============ HERO ============ -->
+    <section class="hero" id="inicio">
+      <div class="hero__media" role="img" aria-label="Cadeira de barbeiro com o logo da Corteza Barbearia"></div>
+      <div class="hero__content">
+        <div class="container">
+          <span class="status" id="openStatus"><i></i><b>Verificando horário…</b></span>
+          <h1 class="hero__title">Seu visual em dia,<br><em>sem fila e sem pressa.</em></h1>
+          <p class="hero__text">Atendimento exclusivo com o <strong>Guilherme</strong>, café cortesia e geladeira liberada. Escolha o serviço, o horário e confirme no WhatsApp em menos de 1 minuto.</p>
+          <div class="hero__actions">
+            <a href="#agendar" class="btn btn--red btn--lg">Agendar agora</a>
+            <a href="#club" class="btn btn--ghost btn--lg">Conhecer os planos</a>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <!-- ABA 2: CLUB CORTEZA (ASSINATURAS) -->
-    <section id="clube" style="border-top: 1px solid #ddd;">
-        <h2 class="headline">Club Corteza</h2>
-        <p class="subheadline">Venha quantas vezes quiser, mantenha a régua sempre atualizada e pague uma mensalidade fixa sem burocracia.</p>
-        
-        <div class="grid-container">
-            <div class="card">
-                <div>
-                    <h3>Club 2x</h3>
-                    <ul>
-                        <li>• Até 2 cortes de cabelo no mês</li>
+    <!-- Faixa de informações rápidas -->
+    <section class="infobar" aria-label="Informações rápidas">
+      <div class="container infobar__grid">
+        <div class="infobar__item">
+          <span class="infobar__label">Endereço</span>
+          <span>R. Mieceslau Jasiocha, 66 · Thomaz Coelho</span>
+        </div>
+        <div class="infobar__item">
+          <span class="infobar__label">Horário</span>
+          <span>Ter a Sex 10h–20h · Sáb 9h–20h</span>
+        </div>
+        <div class="infobar__item">
+          <span class="infobar__label">Barbeiro</span>
+          <span>Guilherme · atendimento único</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SERVIÇOS ============ -->
+    <section class="section" id="servicos">
+      <div class="container">
+        <header class="section__head">
+          <span class="kicker">Tabela de serviços</span>
+          <h2 class="display">Serviços</h2>
+          <p class="section__sub">Toque em <strong>+ Adicionar</strong> para montar seu atendimento. Os itens vão direto para o agendamento.</p>
+        </header>
+
+        <div class="tabs" role="tablist" aria-label="Categorias de serviço">
+          <button class="tab is-active" role="tab" aria-selected="true" data-tab="avulsos">Avulsos</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="combos">Combos</button>
+          <button class="tab" role="tab" aria-selected="false" data-tab="quimicas">Químicas</button>
+        </div>
+
+        <div class="services" id="servicesGrid" role="tabpanel"></div>
+      </div>
+    </section>
+
+    <!-- ============ CLUB CORTEZA ============ -->
+    <section class="section section--paper" id="club">
+      <div class="container">
+        <header class="section__head">
+          <span class="kicker kicker--green">clubcorteza</span>
+          <h2 class="display">Planos de assinatura</h2>
+          <p class="section__sub">Para quem não quer deixar o visual pra depois.</p>
+        </header>
+
+        <div class="club-tabs" role="tablist" aria-label="Tipos de plano">
+          <button class="club-tab is-active" data-club="one">ONE</button>
+          <button class="club-tab" data-club="black">BLACK</button>
+          <button class="club-tab" data-club="outros">2x &amp; Anual</button>
+        </div>
+
+        <div class="plans" id="plansGrid"></div>
+        <p class="fineprint">*Consulte regras de uso e disponibilidade.</p>
+      </div>
+    </section>
+
+    <!-- ============ PRODUTOS ============ -->
+    <section class="section" id="produtos">
+      <div class="container">
+        <header class="section__head">
+          <span class="kicker">Linha El Guapo</span>
+          <h2 class="display display--serif">Produtos</h2>
+          <p class="section__sub">Reserve pelo site e retire no dia do seu atendimento.</p>
+        </header>
+        <div class="products" id="productsGrid"></div>
+      </div>
+    </section>
+
+    <!-- ============ EXPERIÊNCIA ============ -->
+    <section class="section section--dark" id="experiencia">
+      <div class="container">
+        <header class="section__head section__head--light">
+          <span class="kicker kicker--red">A casa é sua</span>
+          <h2 class="display">Experiência Corteza</h2>
+        </header>
+
+        <div class="perks">
+          <article class="perk">
+            <div class="perk__icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48"><path d="M10 18h24v12a10 10 0 0 1-10 10h-4a10 10 0 0 1-10-10V18z" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M34 21h3a5 5 0 0 1 0 10h-3" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M17 6c-2 3 2 5 0 8M24 6c-2 3 2 5 0 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+            </div>
+            <h3>Café cortesia</h3>
+            <p>Aquele cafezinho de copinho, sempre passado, por conta da casa enquanto você espera.</p>
+          </article>
+          <article class="perk">
+            <div class="perk__icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48"><rect x="12" y="4" width="24" height="40" rx="3" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M12 18h24M17 10v4M17 23v8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+            </div>
+            <h3>Geladeira gelada</h3>
+            <p>Nossa geladeirinha preta tem Monster, Coca-Cola e outras bebidas pra acompanhar o corte.</p>
+          </article>
+          <article class="perk">
+            <div class="perk__icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48"><circle cx="24" cy="16" r="8" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M8 44c0-9 7-15 16-15s16 6 16 15" fill="none" stroke="currentColor" stroke-width="2.5"/></svg>
+            </div>
+            <h3>Um barbeiro, um padrão</h3>
+            <p>Quem te atende é sempre o Guilherme. Ele conhece seu corte e mantém o mesmo acabamento toda vez.</p>
+          </article>
+          <article class="perk">
+            <div class="perk__icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48"><rect x="6" y="10" width="36" height="32" rx="3" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M6 19h36M16 5v9M32 5v9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="m17 30 5 5 9-10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+            </div>
+            <h3>Hora marcada</h3>
+            <p>Agende pelo site, confirme no WhatsApp e chegue na hora. Sem ficar esperando a vez.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ AGENDAMENTO ============ -->
+    <section class="section section--paper" id="agendar">
+      <div class="container container--narrow">
+        <header class="section__head">
+          <span class="kicker">Rápido e sem cadastro</span>
+          <h2 class="display">Agende seu horário</h2>
+          <p class="section__sub">Ao finalizar, você é levado automaticamente para o WhatsApp com tudo preenchido.</p>
+        </header>
+
+        <div class="booking" id="booking">
+          <ol class="steps" aria-label="Etapas do agendamento">
+            <li class="is-active" data-step-dot="1"><span>1</span>Serviços</li>
+            <li data-step-dot="2"><span>2</span>Data e hora</li>
+            <li data-step-dot="3"><span>3</span>Seus dados</li>
+            <li data-step-dot="4"><span>4</span>Pagamento</li>
+          </ol>
+
+          <!-- Etapa 1 -->
+          <div class="step is-active" data-step="1">
+            <h3 class="step__title">O que vamos fazer hoje?</h3>
+            <div class="picker" id="servicePicker"></div>
+            <div class="step__nav">
+              <span></span>
+              <button class="btn btn--dark" data-next>Continuar</button>
+            </div>
+          </div>
+
+          <!-- Etapa 2 -->
+          <div class="step" data-step="2">
+            <h3 class="step__title">Escolha o dia</h3>
+            <div class="days" id="daysList"></div>
+            <h3 class="step__title">Escolha o horário</h3>
+            <div class="slots" id="slotsList"><p class="muted">Selecione um dia primeiro.</p></div>
+            <div class="step__nav">
+              <button class="btn btn--text" data-prev>Voltar</button>
+              <button class="btn btn--dark" data-next>Continuar</button>
+            </div>
+          </div>
+
+          <!-- Etapa 3 -->
+          <div class="step" data-step="3">
+            <h3 class="step__title">Seus dados</h3>
+            <div class="form">
+              <label class="field">
+                <span>Nome</span>
+                <input type="text" id="fName" autocomplete="name" placeholder="Como podemos te chamar?" required>
+              </label>
+              <label class="field">
+                <span>WhatsApp</span>
+                <input type="tel" id="fPhone" autocomplete="tel" inputmode="tel" placeholder="(21) 90000-0000" required>
+              </label>
+              <label class="field field--full">
+                <span>Observação <em>(opcional)</em></span>
+                <textarea id="fNote" rows="2" placeholder="Ex.: degradê baixo, manter o topo…"></textarea>
+              </label>
+            </div>
+            <div class="step__nav">
+              <button class="btn btn--text" data-prev>Voltar</button>
+              <button class="btn btn--dark" data-next>Continuar</button>
+            </div>
+          </div>
+
+          <!-- Etapa 4 -->
+          <div class="step" data-step="4">
+            <h3 class="step__title">Como prefere pagar?</h3>
+            <div class="paylist" id="payList">
+              <label class="payopt">
+                <input type="radio" name="pay" value="pix" checked>
+                <span class="payopt__box">
+                  <strong>Pix agora</strong>
+                  <small>Pague pelo site com QR Code ou copia e cola e garanta o horário.</small>
+                </span>
+              </label>
+              <label class="payopt">
+                <input type="radio" name="pay" value="local">
+                <span class="payopt__box">
+                  <strong>Pagar na barbearia</strong>
+                  <small>Pix, cartão ou dinheiro no dia do atendimento.</small>
+                </span>
+              </label>
+            </div>
+
+            <div class="summary" id="summary"></div>
+
+            <div class="step__nav">
+              <button class="btn btn--text" data-prev>Voltar</button>
+              <button class="btn btn--red" id="confirmBtn">Confirmar no WhatsApp</button>
+            </div>
+          </div>
+
+          <!-- Sucesso -->
+          <div class="step step--done" data-step="done">
+            <div class="done__check" aria-hidden="true">
+              <svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24" fill="none" stroke="currentColor" stroke-width="3"/><path d="m15 27 8 8 15-17" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3 class="step__title">Pré-agendamento feito!</h3>
+            <p id="doneText" class="muted"></p>
+            <p class="countdown" id="countdown"></p>
+            <div class="done__actions">
+              <a class="btn btn--whats" id="doneWhats" href="#" target="_blank" rel="noopener">Abrir WhatsApp agora</a>
+              <button class="btn btn--text" id="newBooking">Fazer outro agendamento</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ LOCAL ============ -->
+    <section class="section" id="local">
+      <div class="container">
+        <header class="section__head">
+          <span class="kicker">Venha tomar um café</span>
+          <h2 class="display">Onde estamos</h2>
+        </header>
+
+        <div class="location">
+          <div class="location__info">
+            <h3 class="serif">R. Mieceslau Jasiocha, 66</h3>
+            <p>Thomaz Coelho · Rio de Janeiro - RJ</p>
+            <a class="btn btn--dark" target="_blank" rel="noopener"
+               href="https://www.google.com/maps/search/?api=1&query=R.+Mieceslau+Jasiocha,+66+-+Thomaz+Coelho,+Rio+de+Janeiro">Como chegar</a>
+
+            <table class="hours" id="hoursTable" aria-label="Horário de funcionamento">
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="location__map">
+            <iframe title="Mapa da Corteza Barbearia" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+              src="https://www.google.com/maps?q=R.+Mieceslau+Jasiocha,+66+-+Thomaz+Coelho,+Rio+de+Janeiro&output=embed"></iframe>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FAQ ============ -->
+    <section class="section section--paper" id="faq">
+      <div class="container container--narrow">
+        <header class="section__head">
+          <span class="kicker">Dúvidas</span>
+          <h2 class="display">Perguntas frequentes</h2>
+        </header>
+        <div class="faq">
+          <details>
+            <summary>Preciso agendar ou posso chegar direto?</summary>
+            <p>Como o atendimento é feito só pelo Guilherme, o ideal é agendar. Assim você chega e já senta na cadeira.</p>
+          </details>
+          <details>
+            <summary>O agendamento pelo site já está confirmado?</summary>
+            <p>O site gera um pré-agendamento e te leva ao WhatsApp com tudo preenchido. É só enviar a mensagem e aguardar a confirmação do horário.</p>
+          </details>
+          <details>
+            <summary>Quais formas de pagamento vocês aceitam?</summary>
+            <p>Pix pelo próprio site ou, na barbearia, Pix, cartão e dinheiro.</p>
+          </details>
+          <details>
+            <summary>Como funcionam os planos Club Corteza?</summary>
+            <p>Os planos dão direito a atendimentos ilimitados* dentro das regras de cada plano. Toque em “Quero assinar” que te passamos todos os detalhes no WhatsApp.</p>
+          </details>
+          <details>
+            <summary>Tem café mesmo?</summary>
+            <p>Tem sim! Café cortesia de copinho e uma geladeira com Monster, Coca-Cola e outras bebidas.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="footer">
+    <div class="container footer__inner">
+      <img src="images/barbearia/logo-corteza-branco.png" alt="Corteza Barbearia" class="footer__logo" width="180" height="56" loading="lazy">
+      <div class="footer__cols">
+        <div>
+          <h4>Endereço</h4>
+          <p>R. Mieceslau Jasiocha, 66<br>Thomaz Coelho · Rio de Janeiro</p>
+        </div>
+        <div>
+          <h4>Horário</h4>
+          <p>Ter a Sex · 10h às 20h<br>Sábado · 9h às 20h<br>Dom e Seg · fechado</p>
+        </div>
+        <div>
+          <h4>Contato</h4>
+          <p><a href="#" data-whats>WhatsApp</a><br><a href="#agendar">Agendar online</a></p>
+        </div>
+      </div>
+      <p class="footer__copy">© <span id="year"></span> Corteza Barbearia. Todos os direitos reservados.</p>
+    </div>
+  </footer>
+
+  <!-- Barra de seleção (carrinho) -->
+  <div class="cartbar" id="cartbar" hidden>
+    <div class="cartbar__info">
+      <strong id="cartCount">0 itens</strong>
+      <span id="cartTotal">R$ 0</span>
+    </div>
+    <a href="#agendar" class="btn btn--red" id="cartGo">Agendar</a>
+  </div>
+
+  <!-- Botão flutuante WhatsApp -->
+  <a href="#" class="fab-whats" data-whats aria-label="Falar no WhatsApp" target="_blank" rel="noopener">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 3a13 13 0 0 0-11.2 19.6L3 29l6.6-1.7A13 13 0 1 0 16 3zm0 23.7c-2 0-4-.6-5.7-1.6l-.4-.2-3.9 1 1-3.8-.3-.4A10.7 10.7 0 1 1 16 26.7zm5.9-8c-.3-.2-1.9-.9-2.2-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7 0a8.8 8.8 0 0 1-4.4-3.8c-.3-.6.3-.5.9-1.7.1-.2 0-.4 0-.5l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4s-1.1 1.1-1.1 2.7 1.2 3.1 1.3 3.3c.2.2 2.3 3.5 5.5 4.9 2 .9 2.8.9 3.8.8.6-.1 1.9-.8 2.2-1.5s.3-1.3.2-1.5c-.1-.1-.3-.2-.6-.4z"/></svg>
+  </a>
+
+  <!-- Modal Pix -->
+  <div class="modal" id="pixModal" hidden>
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="pixTitle">
+      <button class="modal__close" data-close aria-label="Fechar">×</button>
+      <span class="kicker">Pagamento via Pix</span>
+      <h3 class="serif" id="pixTitle">R$ 0,00</h3>
+      <p class="muted" id="pixDesc"></p>
+      <div class="pix__qr" id="pixQr"></div>
+      <label class="field field--full">
+        <span>Pix copia e cola</span>
+        <textarea id="pixCode" rows="3" readonly></textarea>
+      </label>
+      <div class="modal__actions">
+        <button class="btn btn--dark" id="pixCopy">Copiar código</button>
+        <button class="btn btn--whats" id="pixDone">Já paguei, enviar no WhatsApp</button>
+      </div>
+      <p class="fineprint">Após pagar, envie o comprovante na conversa do WhatsApp.</p>
+    </div>
+  </div>
+
+  <!-- Lightbox para as artes -->
+  <div class="lightbox" id="lightbox" hidden>
+    <button class="modal__close" data-close aria-label="Fechar">×</button>
+    <img src="" alt="" id="lightboxImg">
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="vendor/qrcode.js" defer></script>
+  <script src="script.js" defer></script>
+</body>
+</html>
