@@ -125,7 +125,7 @@ function goStep(n) {
   };
   if (from && from !== to && !reduceMotion()) {
     from.classList.add(forward ? 'leave-left' : 'leave-right');
-    setTimeout(show, 300); // mesmo tempo do .leave-* no CSS
+    setTimeout(show, 420); // mesmo tempo do .leave-* no CSS
   } else {
     show();
   }

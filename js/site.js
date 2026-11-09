@@ -66,7 +66,7 @@ function initStatus() {
    ---------------------------------------------------------- */
 function renderServices(tab) {
   $('#servicesGrid').innerHTML = SERVICES[tab].map((s, i) => `
-    <article class="service" data-id="${s.id}" style="--i:${i}">
+    <article class="service reveal tilt" data-id="${s.id}" style="--i:${i}">
       <span class="service__tag">${TAB_LABEL[tab]}</span>
       <h3 class="service__name">${s.name}</h3>
       ${s.art ? `<button class="service__art" data-art="${s.art}" data-alt="${s.name}">ver arte</button>` : ''}
@@ -79,10 +79,16 @@ function renderServices(tab) {
 }
 
 function initServices() {
+  const grid = $('#servicesGrid');
   renderServices('avulsos');
+  Reveal.observe(grid);
+  initTilt(grid);
+  const movePill = initTabPill($('.tabs'), '.tab.is-active');
   $$('.tab').forEach((t) => t.addEventListener('click', () => {
+    if (t.classList.contains('is-active')) return;
     $$('.tab').forEach((x) => { x.classList.toggle('is-active', x === t); x.setAttribute('aria-selected', String(x === t)); });
-    renderServices(t.dataset.tab);
+    movePill();
+    swapContent(grid, () => renderServices(t.dataset.tab));
   }));
 }
 
@@ -92,7 +98,7 @@ function initServices() {
 function renderPlans(kind) {
   const meta = PLAN_META[kind];
   $('#plansGrid').innerHTML = PLANS[kind].map((p, i) => `
-    <article class="plan plan--${kind}" style="--i:${i}">
+    <article class="plan plan--${kind} reveal tilt" style="--i:${i}">
       <div class="plan__top">
         <div class="plan__club">${meta.club}</div>
         <div class="plan__name">${p.club || meta.name}</div>
@@ -116,10 +122,16 @@ function renderPlans(kind) {
 const planLabel = (kind, p) => `${p.club || 'Club ' + PLAN_META[kind].name} — ${p.what}`;
 
 function initPlans() {
+  const grid = $('#plansGrid');
   renderPlans('one');
+  Reveal.observe(grid);
+  initTilt(grid);
+  const movePill = initTabPill($('.club-tabs'), '.club-tab.is-active');
   $$('.club-tab').forEach((t) => t.addEventListener('click', () => {
+    if (t.classList.contains('is-active')) return;
     $$('.club-tab').forEach((x) => x.classList.toggle('is-active', x === t));
-    renderPlans(t.dataset.club);
+    movePill();
+    swapContent(grid, () => renderPlans(t.dataset.club));
   }));
   $('#plansGrid').addEventListener('click', (e) => {
     const w = e.target.closest('[data-plan-whats]');
@@ -143,7 +155,7 @@ function initPlans() {
    ---------------------------------------------------------- */
 function renderProducts() {
   $('#productsGrid').innerHTML = PRODUCTS.map((p, i) => `
-    <article class="product reveal" data-id="${p.id}" style="--i:${i}">
+    <article class="product reveal tilt" data-id="${p.id}" style="--i:${i}">
       <div class="product__img" data-art="${p.img}" data-alt="${p.name}">
         <img src="${p.img}" alt="${p.name} El Guapo" loading="lazy" width="400" height="400" class="fade-img">
       </div>
@@ -201,11 +213,16 @@ function syncCartBar(bump) {
   document.body.classList.toggle('has-cart', !bar.hidden);
   $('#cartCount').textContent = `${items.length} ${items.length === 1 ? 'item' : 'itens'}`;
   $('#cartTotal').textContent = total ? `${brl(total)}${ask ? ' + consulta' : ''}` : 'Valor sob consulta';
-  if (bump && !bar.hidden) {
-    bar.classList.remove('is-bump');
-    void bar.offsetWidth; // reinicia a animação
-    bar.classList.add('is-bump');
-  }
+  if (bump) bumpCart();
+}
+
+/** "Tremidinha" da barra da sacola */
+function bumpCart() {
+  const bar = $('#cartbar');
+  if (bar.hidden) return;
+  bar.classList.remove('is-bump');
+  void bar.offsetWidth; // reinicia a animação
+  bar.classList.add('is-bump');
 }
 
 function onCartChange(bump) {
@@ -216,20 +233,27 @@ function onCartChange(bump) {
   if (typeof renderSummary === 'function') renderSummary();
 }
 
-function toggleItem(id) {
+function toggleItem(id, sourceEl) {
   const adding = !cart.has(id);
   if (adding) cart.add(id); else cart.delete(id);
-  if (adding) {
-    const it = ALL_ITEMS[id];
-    toast(`${it.name} ${it.type === 'produto' ? 'reservado' : 'adicionado'} ✓`);
+  if (!adding) { onCartChange(false); return; }
+
+  const it = ALL_ITEMS[id];
+  toast(`${it.name} ${it.type === 'produto' ? 'reservado' : 'adicionado'} ✓`);
+  // Fora do agendamento, o item "voa" até a sacola e ela pula quando ele chega
+  const inPicker = sourceEl && sourceEl.closest('#servicePicker');
+  if (sourceEl && !inPicker) {
+    onCartChange(false);
+    flyToCart(sourceEl, it).then(bumpCart);
+  } else {
+    onCartChange(true);
   }
-  onCartChange(adding);
 }
 
 function initCart() {
   document.addEventListener('click', (e) => {
     const t = e.target.closest('[data-toggle]');
-    if (t) toggleItem(t.dataset.toggle);
+    if (t) toggleItem(t.dataset.toggle, t);
   });
   $('#clearCart').addEventListener('click', () => {
     if (!cart.size) return;
@@ -287,21 +311,10 @@ function initLightbox() {
    ANIMAÇÕES
    ---------------------------------------------------------- */
 
-/** Elementos .reveal surgem de baixo para cima ao entrar na tela */
+/** Liga o reveal repetível e a inclinação 3D em toda a página (ver js/motion.js) */
 function initReveal() {
-  const els = $$('.reveal:not(.is-visible)');
-  if (reduceMotion() || !('IntersectionObserver' in window)) {
-    els.forEach((el) => el.classList.add('is-visible'));
-    return;
-  }
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach((en) => {
-      if (!en.isIntersecting) return;
-      en.target.classList.add('is-visible');
-      io.unobserve(en.target);
-    });
-  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
-  els.forEach((el) => io.observe(el));
+  Reveal.observe(document);
+  initTilt(document);
 }
 
 /** Imagens aparecem com fade quando terminam de carregar */

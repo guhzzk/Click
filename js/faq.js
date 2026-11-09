@@ -8,7 +8,7 @@
 function initFaq(root = document.getElementById('faqList')) {
   if (!root) return;
   const items = [...root.querySelectorAll('.faq__item')];
-  const DURATION = 450; // igual ao CSS (.faq__a)
+  const DURATION = 650; // igual ao CSS (.faq__a)
 
   /** Abre um item medindo a altura do conteúdo */
   function open(item) {
