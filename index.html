@@ -150,7 +150,7 @@
               <svg viewBox="0 0 48 48"><rect x="12" y="4" width="24" height="40" rx="3" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M12 18h24M17 10v4M17 23v8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
             </div>
             <h3>Geladeira gelada</h3>
-            <p>Nossa geladeirinha preta tem Monster, Coca-Cola e outras bebidas pra acompanhar o corte.</p>
+            <p>Nossa geladeirinha preta está sempre abastecida com Monster, Coca-Cola e outras bebidas para acompanhar o seu corte <em>(consultar valores no local)</em>.</p>
           </article>
           <article class="perk">
             <div class="perk__icon" aria-hidden="true">
@@ -221,10 +221,6 @@
                 <span>WhatsApp</span>
                 <input type="tel" id="fPhone" autocomplete="tel" inputmode="tel" placeholder="(21) 90000-0000" required>
               </label>
-              <label class="field field--full">
-                <span>Observação <em>(opcional)</em></span>
-                <textarea id="fNote" rows="2" placeholder="Ex.: degradê baixo, manter o topo…"></textarea>
-              </label>
             </div>
             <div class="step__nav">
               <button class="btn btn--text" data-prev>Voltar</button>
@@ -289,8 +285,8 @@
           <div class="location__info">
             <h3 class="serif">R. Mieceslau Jasiocha, 66</h3>
             <p>Thomaz Coelho · Rio de Janeiro - RJ</p>
-            <a class="btn btn--dark" target="_blank" rel="noopener"
-               href="https://www.google.com/maps/search/?api=1&query=R.+Mieceslau+Jasiocha,+66+-+Thomaz+Coelho,+Rio+de+Janeiro">Como chegar</a>
+            <a class="btn btn--dark" id="routeBtn" target="_blank" rel="noopener"
+               href="https://www.google.com/maps/dir/?api=1&destination=R.+Mieceslau+Jasiocha%2C+66+-+Thomaz+Coelho%2C+Rio+de+Janeiro+-+RJ&travelmode=driving">Como chegar</a>
 
             <table class="hours" id="hoursTable" aria-label="Horário de funcionamento">
               <tbody></tbody>
@@ -330,7 +326,7 @@
           </details>
           <details>
             <summary>Tem café mesmo?</summary>
-            <p>Tem sim! Café cortesia de copinho e uma geladeira com Monster, Coca-Cola e outras bebidas.</p>
+            <p>Tem sim! O café de copinho é cortesia da casa. Na geladeira tem Monster, Coca-Cola e outras bebidas, com valores consultados no local.</p>
           </details>
         </div>
       </div>

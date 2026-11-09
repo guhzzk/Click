@@ -372,7 +372,7 @@ function renderDays() {
     const h = CONFIG.hours[d.dow];
     if (!h) continue;
     // Se hoje já passou do último horário, pula
-    if (i === 0 && now.minutes >= h[1] * 60 - CONFIG.slotMinutes) continue;
+    if (i === 0 && now.minutes + MIN_ADVANCE >= h[1] * 60 - CONFIG.slotMinutes) continue;
     days.push({ ...d, today: i === 0, tomorrow: i === 1 });
   }
   $('#daysList').innerHTML = days.map((d) => `
@@ -382,20 +382,32 @@ function renderDays() {
       <span>${MONTH_SHORT[d.m]}</span>
     </button>`).join('');
 }
+/** Minutos mínimos de antecedência para agendar no mesmo dia */
+const MIN_ADVANCE = 15;
+function isPastSlot(iso, minutes) {
+  const now = nowLocal();
+  if (iso < now.iso) return true;
+  return iso === now.iso && minutes <= now.minutes + MIN_ADVANCE;
+}
+const toMinutes = (hhmm) => { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; };
+
 function renderSlots() {
   const box = $('#slotsList');
   if (!state.date) { box.innerHTML = '<p class="muted">Selecione um dia primeiro.</p>'; return; }
+  // Se o horário escolhido já passou (ex.: página aberta há muito tempo), limpa a escolha
+  if (state.time && isPastSlot(state.date, toMinutes(state.time))) {
+    state.time = null;
+    toast('O horário escolhido já passou. Escolha outro.');
+  }
   const { dow } = addDays(state.date, 0);
   const [open, close] = CONFIG.hours[dow];
-  const now = nowLocal();
-  const isToday = state.date === now.iso;
   let html = '';
   for (let m = open * 60; m <= close * 60 - CONFIG.slotMinutes; m += CONFIG.slotMinutes) {
+    if (isPastSlot(state.date, m)) continue; // horários que já passaram não aparecem
     const label = `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
-    const past = isToday && m <= now.minutes + 15;
-    html += `<button class="slot ${state.time === label ? 'is-on' : ''}" data-slot="${label}" ${past ? 'disabled' : ''}>${label}</button>`;
+    html += `<button class="slot ${state.time === label ? 'is-on' : ''}" data-slot="${label}">${label}</button>`;
   }
-  box.innerHTML = html;
+  box.innerHTML = html || '<p class="muted">Não há mais horários livres hoje. Escolha outro dia.</p>';
 }
 
 function renderSummary() {
@@ -447,6 +459,13 @@ function validate(step) {
   if (step === 1 && ![...state.cart].some((id) => ALL_ITEMS[id].type === 'servico')) { toast('Adicione um serviço para agendar'); return false; }
   if (step === 2 && !state.date) { toast('Escolha o dia'); return false; }
   if (step === 2 && !state.time) { toast('Escolha o horário'); return false; }
+  if (step === 2 && isPastSlot(state.date, toMinutes(state.time))) {
+    state.time = null;
+    renderSlots();
+    toast('Esse horário já passou. Escolha outro.');
+    goStep(2);
+    return false;
+  }
   if (step === 3) {
     const name = $('#fName'), phone = $('#fPhone');
     const okName = name.value.trim().length >= 2;
@@ -464,23 +483,26 @@ function buildMessage(paidPix) {
   const servs = items.filter((i) => i.type === 'servico');
   const prods = items.filter((i) => i.type === 'produto');
   const pay = $('input[name="pay"]:checked').value;
-  const note = $('#fNote').value.trim();
+  const price = (i) => (i.price != null ? brl(i.price) : 'sob consulta');
   const lines = [
-    'Olá! Quero confirmar meu agendamento na *Corteza Barbearia* 💈',
+    '✂️ *NOVO AGENDAMENTO - CORTEZA*',
     '',
-    `*Nome:* ${$('#fName').value.trim()}`,
-    `*WhatsApp:* ${$('#fPhone').value.trim()}`,
-    `*Data:* ${formatDateLong(state.date)}`,
-    `*Horário:* ${state.time}`,
-    `*Barbeiro:* ${CONFIG.barber}`,
+    `👤 *Cliente:* ${$('#fName').value.trim()}`,
+    `📱 *WhatsApp:* ${$('#fPhone').value.trim()}`,
     '',
-    '*Serviços:*',
-    ...servs.map((s) => `• ${s.name} — ${s.price != null ? brl(s.price) : 'sob consulta'}`),
+    `📅 *Data:* ${formatDateLong(state.date)}`,
+    `⏰ *Horário:* ${state.time}`,
+    '',
+    '🛠️ *Serviços:*',
+    ...servs.map((i) => `• ${i.name} — ${price(i)}`),
   ];
-  if (prods.length) lines.push('', '*Produtos para retirar:*', ...prods.map((p) => `• ${p.name} — ${brl(p.price)}`));
-  lines.push('', `*Total:* ${total ? brl(total) : '—'}${ask ? ' + itens sob consulta' : ''}`);
-  lines.push(`*Pagamento:* ${pay === 'pix' ? (paidPix ? 'Pix pago pelo site (envio o comprovante)' : 'Pix') : 'Na barbearia'}`);
-  if (note) lines.push(`*Obs.:* ${note}`);
+  if (prods.length) lines.push('', '🛍️ *Produtos para retirar:*', ...prods.map((i) => `• ${i.name} — ${price(i)}`));
+  lines.push(
+    '',
+    `💰 *Total:* ${total ? brl(total) : 'sob consulta'}${total && ask ? ' + itens sob consulta' : ''}`,
+    `💳 *Forma de Pagamento:* ${pay === 'pix' ? 'Pix pelo Site' : 'Pagar na Barbearia'}`,
+  );
+  if (pay === 'pix' && paidPix) lines.push('', '_Segue o comprovante do Pix._');
   return lines.join('\n');
 }
 
@@ -488,7 +510,7 @@ function finishBooking(paidPix) {
   const msg = buildMessage(paidPix);
   const url = whatsUrl(msg);
   store('corteza_ultimo', { date: state.date, time: state.time, name: $('#fName').value.trim() });
-  store('corteza_cliente', { name: $('#fName').value.trim(), phone: $('#fPhone').value.trim() });
+  saveClient();
 
   $('#doneText').textContent = `${formatDateLong(state.date)} às ${state.time} com o ${CONFIG.barber}. Envie a mensagem no WhatsApp para confirmar o horário.`;
   $('#doneWhats').href = url;
@@ -508,12 +530,22 @@ function finishBooking(paidPix) {
   }, 1000);
 }
 
+/* Dados do cliente guardados no aparelho para o próximo agendamento */
+const CLIENT_KEY = 'corteza_cliente';
+function saveClient() {
+  store(CLIENT_KEY, { name: $('#fName').value.trim(), phone: $('#fPhone').value.trim() });
+}
+function fillClient() {
+  const saved = store(CLIENT_KEY);
+  if (!saved) return;
+  if (!$('#fName').value) $('#fName').value = saved.name || '';
+  if (!$('#fPhone').value) $('#fPhone').value = saved.phone || '';
+}
+
 function initBooking() {
   renderPicker();
 
-  // Preenche dados salvos de um agendamento anterior
-  const saved = store('corteza_cliente');
-  if (saved) { $('#fName').value = saved.name || ''; $('#fPhone').value = saved.phone || ''; }
+  fillClient();
 
   $$('[data-next]').forEach((b) => b.addEventListener('click', () => { if (validate(state.step)) goStep(state.step + 1); }));
   $$('[data-prev]').forEach((b) => b.addEventListener('click', () => goStep(state.step - 1)));
@@ -532,6 +564,9 @@ function initBooking() {
     state.time = s.dataset.slot;
     renderSlots();
   });
+
+  // Atualiza dias/horários a cada minuto enquanto a etapa 2 estiver aberta
+  setInterval(() => { if (state.step === 2) { renderDays(); renderSlots(); } }, 60000);
 
   // Máscara de telefone
   $('#fPhone').addEventListener('input', (e) => {
@@ -613,6 +648,8 @@ function openPix(amount, desc, onDone) {
   $('#pixTitle').textContent = brl(amount);
   $('#pixDesc').innerHTML = `${desc}${demo ? '<br><strong style="color:var(--red)">Modo demonstração: configure a chave Pix em script.js.</strong>' : ''}`;
   $('#pixCode').value = code;
+  $('#pixCopy').textContent = 'Copiar código';
+  $('#pixCopy').classList.remove('is-copied');
   const qr = $('#pixQr');
   qr.innerHTML = '';
   if (window.qrcode) {
@@ -628,11 +665,23 @@ function closeModal(el) { el.hidden = true; document.body.style.overflow = ''; }
 function initPix() {
   const modal = $('#pixModal');
   $$('[data-close]', modal).forEach((b) => b.addEventListener('click', () => closeModal(modal)));
-  $('#pixCopy').addEventListener('click', async () => {
+  $('#pixCopy').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
     const code = $('#pixCode').value;
-    try { await navigator.clipboard.writeText(code); }
-    catch (e) { $('#pixCode').select(); document.execCommand('copy'); }
-    toast('Código Pix copiado ✓');
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(code);
+      ok = true;
+    } catch (err) {
+      // Alternativa para navegadores sem permissão da área de transferência
+      const ta = $('#pixCode');
+      ta.focus(); ta.select(); ta.setSelectionRange(0, code.length);
+      try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
+    }
+    clearTimeout(btn._t);
+    btn.textContent = ok ? '✅ Copiado!' : 'Selecione e copie o código acima';
+    btn.classList.toggle('is-copied', ok);
+    btn._t = setTimeout(() => { btn.textContent = 'Copiar código'; btn.classList.remove('is-copied'); }, 2000);
   });
   $('#pixDone').addEventListener('click', () => {
     closeModal(modal);

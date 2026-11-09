@@ -499,3 +499,6 @@ body.has-cart .fab-whats { bottom: 86px; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
   html { scroll-behavior: auto; }
 }
+
+/* Botão de copiar Pix após copiar */
+#pixCopy.is-copied { background: var(--whats); }
