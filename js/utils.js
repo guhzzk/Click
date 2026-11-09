@@ -107,7 +107,7 @@ function maskPhone(input) {
 }
 
 /* ---------- Modais ---------- */
-const MODAL_MS = 350; // duração da animação de abrir/fechar (igual ao CSS)
+const MODAL_MS = 450; // duração da animação de abrir/fechar (igual ao CSS)
 
 function openModal(el) {
   clearTimeout(el._closeT);
