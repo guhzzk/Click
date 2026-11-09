@@ -5,7 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Corteza Barbearia | Thomaz Coelho</title>
   <meta name="description" content="Corteza Barbearia em Thomaz Coelho. Corte, barba, sobrancelha, combos e planos de assinatura Club Corteza. Agende online e confirme pelo WhatsApp.">
-  <meta name="theme-color" content="#141414">
+  <meta name="theme-color" content="#EEEAE3">
+  <!-- Tema antes da pintura: evita piscar claro ao abrir no escuro -->
+  <script>
+    (function () {
+      var t = null;
+      try { t = localStorage.getItem('corteza_tema'); } catch (e) {}
+      if (t !== 'dark' && t !== 'light') t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
   <meta property="og:title" content="Corteza Barbearia">
   <meta property="og:description" content="Agende seu horário online. Café cortesia e geladeira liberada pra você esperar com estilo.">
   <meta property="og:image" content="images/barbearia/banner-corteza.webp">
@@ -25,7 +34,8 @@
   <header class="header" id="header">
     <div class="container header__inner">
       <a href="#inicio" class="header__logo" aria-label="Corteza Barbearia - início">
-        <img src="images/barbearia/logo-corteza.png" alt="Corteza Barbearia" width="136" height="42">
+        <img class="logo-dark" src="images/barbearia/logo-corteza.png" alt="Corteza Barbearia" width="136" height="42">
+        <img class="logo-light" src="images/barbearia/logo-corteza-branco.png" alt="" width="136" height="42" aria-hidden="true">
       </a>
 
       <nav class="nav" id="nav" aria-label="Navegação principal">
@@ -56,7 +66,10 @@
       <div class="hero__content">
         <div class="container">
           <span class="status is-loading" id="openStatus"><i></i><b>Verificando horário…</b></span>
-          <h1 class="hero__title">Seu visual em dia,<br><em>sem fila e sem pressa.</em></h1>
+          <h1 class="hero__title">
+            <span class="neon neon--white" data-text="Seu visual em dia,">Seu visual em dia,</span><br>
+            <em class="neon neon--red" data-text="sem fila e sem pressa.">sem fila e sem pressa.</em>
+          </h1>
           <p class="hero__text">Atendimento exclusivo com o <strong>Guilherme</strong>, café cortesia e geladeira liberada. Escolha o serviço, o horário e confirme no WhatsApp em menos de 1 minuto.</p>
           <div class="hero__actions">
             <a href="#agendar" class="btn btn--red btn--lg">Agendar agora</a>
@@ -292,8 +305,18 @@
           <div class="location__info reveal">
             <h3 class="serif">R. Mieceslau Jasiocha, 66</h3>
             <p>Thomaz Coelho · Rio de Janeiro - RJ</p>
-            <a class="btn btn--dark" id="routeBtn" target="_blank" rel="noopener"
-               href="https://www.google.com/maps/dir/?api=1&destination=R.+Mieceslau+Jasiocha%2C+66+-+Thomaz+Coelho%2C+Rio+de+Janeiro+-+RJ&travelmode=driving">Como chegar</a>
+            <div class="route-btns" role="group" aria-label="Traçar rota até a barbearia">
+              <a class="route-btn route-btn--gmaps" id="routeGmaps" target="_blank" rel="noopener"
+                 href="https://www.google.com/maps/dir/?api=1&destination=R.%20Mieceslau%20Jasiocha%2C%2066%20-%20Thomaz%20Coelho%2C%20Rio%20de%20Janeiro%20-%20RJ&travelmode=driving">
+                <span class="route-btn__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s7-6.1 7-12a7 7 0 1 0-14 0c0 5.9 7 12 7 12z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.6" fill="currentColor"/></svg></span>
+                <span class="route-btn__txt"><small>Rota no</small><b>Google Maps</b></span>
+              </a>
+              <a class="route-btn route-btn--waze" id="routeWaze" target="_blank" rel="noopener"
+                 href="https://waze.com/ul?q=R.%20Mieceslau%20Jasiocha%2C%2066%20-%20Thomaz%20Coelho%2C%20Rio%20de%20Janeiro%20-%20RJ&navigate=yes">
+                <span class="route-btn__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M3 16h18v2H3z" fill="currentColor"/><circle cx="7.5" cy="13" r="1.3" fill="currentColor"/><circle cx="16.5" cy="13" r="1.3" fill="currentColor"/><path d="M6 18v2M18 18v2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+                <span class="route-btn__txt"><small>Ir com o</small><b>Waze</b></span>
+              </a>
+            </div>
 
             <table class="hours" id="hoursTable" aria-label="Horário de funcionamento">
               <tbody></tbody>
@@ -314,27 +337,62 @@
           <span class="kicker">Dúvidas</span>
           <h2 class="display">Perguntas frequentes</h2>
         </header>
-        <div class="faq reveal">
-          <details>
-            <summary>Preciso agendar ou posso chegar direto?</summary>
-            <p>Como o atendimento é feito só pelo Guilherme, o ideal é agendar. Assim você chega e já senta na cadeira.</p>
-          </details>
-          <details>
-            <summary>O agendamento pelo site já está confirmado?</summary>
-            <p>O site gera um pré-agendamento e te leva ao WhatsApp com tudo preenchido. É só enviar a mensagem e aguardar a confirmação do horário.</p>
-          </details>
-          <details>
-            <summary>Quais formas de pagamento vocês aceitam?</summary>
-            <p>Pix pelo próprio site ou, na barbearia, Pix, cartão e dinheiro.</p>
-          </details>
-          <details>
-            <summary>Como funcionam os planos Club Corteza?</summary>
-            <p>Os planos dão direito a atendimentos ilimitados* dentro das regras de cada plano. Toque em “Quero assinar” que te passamos todos os detalhes no WhatsApp.</p>
-          </details>
-          <details>
-            <summary>Tem café mesmo?</summary>
-            <p>Tem sim! O café de copinho é cortesia da casa. Na geladeira tem Monster, Coca-Cola e outras bebidas, com valores consultados no local.</p>
-          </details>
+        <div class="faq reveal" id="faqList">
+          <div class="faq__item">
+            <h3 class="faq__h">
+              <button class="faq__q" id="faq-q-1" type="button" aria-expanded="false" aria-controls="faq-a-1">
+                <span>Preciso agendar ou posso chegar direto?</span>
+                <span class="faq__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              </button>
+            </h3>
+            <div class="faq__a" id="faq-a-1" role="region" aria-labelledby="faq-q-1">
+              <p class="faq__inner">Como o atendimento é feito só pelo Guilherme, o ideal é agendar. Assim você chega e já senta na cadeira.</p>
+            </div>
+          </div>
+          <div class="faq__item">
+            <h3 class="faq__h">
+              <button class="faq__q" id="faq-q-2" type="button" aria-expanded="false" aria-controls="faq-a-2">
+                <span>O agendamento pelo site já está confirmado?</span>
+                <span class="faq__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              </button>
+            </h3>
+            <div class="faq__a" id="faq-a-2" role="region" aria-labelledby="faq-q-2">
+              <p class="faq__inner">O site gera um pré-agendamento e te leva ao WhatsApp com tudo preenchido. É só enviar a mensagem e aguardar a confirmação do horário.</p>
+            </div>
+          </div>
+          <div class="faq__item">
+            <h3 class="faq__h">
+              <button class="faq__q" id="faq-q-3" type="button" aria-expanded="false" aria-controls="faq-a-3">
+                <span>Quais formas de pagamento vocês aceitam?</span>
+                <span class="faq__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              </button>
+            </h3>
+            <div class="faq__a" id="faq-a-3" role="region" aria-labelledby="faq-q-3">
+              <p class="faq__inner">Pix pelo próprio site ou, na barbearia, Pix, cartão e dinheiro.</p>
+            </div>
+          </div>
+          <div class="faq__item">
+            <h3 class="faq__h">
+              <button class="faq__q" id="faq-q-4" type="button" aria-expanded="false" aria-controls="faq-a-4">
+                <span>Como funcionam os planos Club Corteza?</span>
+                <span class="faq__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              </button>
+            </h3>
+            <div class="faq__a" id="faq-a-4" role="region" aria-labelledby="faq-q-4">
+              <p class="faq__inner">Os planos dão direito a atendimentos ilimitados* dentro das regras de cada plano. Toque em “Quero saber mais” que te passamos todos os detalhes no WhatsApp.</p>
+            </div>
+          </div>
+          <div class="faq__item">
+            <h3 class="faq__h">
+              <button class="faq__q" id="faq-q-5" type="button" aria-expanded="false" aria-controls="faq-a-5">
+                <span>Tem café mesmo?</span>
+                <span class="faq__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              </button>
+            </h3>
+            <div class="faq__a" id="faq-a-5" role="region" aria-labelledby="faq-q-5">
+              <p class="faq__inner">Tem sim! O café de copinho é cortesia da casa. Na geladeira tem Monster, Coca-Cola e outras bebidas, com valores consultados no local.</p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -370,6 +428,12 @@
     </div>
     <a href="#agendar" class="btn btn--red" id="cartGo">Agendar</a>
   </div>
+
+  <!-- Alternador de tema -->
+  <button class="theme-toggle" id="themeToggle" type="button" aria-pressed="false" aria-label="Ativar tema escuro">
+    <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+    <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
 
   <!-- Botão flutuante WhatsApp -->
   <a href="#" class="fab-whats" data-whats aria-label="Falar no WhatsApp" target="_blank" rel="noopener">
@@ -408,7 +472,8 @@
     <div class="modal__backdrop" data-close></div>
     <div class="modal__card modal__card--left" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
       <button class="modal__close" data-close aria-label="Fechar">×</button>
-      <img src="images/barbearia/logo-corteza.png" alt="" class="modal__logo" width="140" height="43">
+      <img src="images/barbearia/logo-corteza.png" alt="" class="modal__logo logo-dark" width="140" height="43">
+      <img src="images/barbearia/logo-corteza-branco.png" alt="" class="modal__logo logo-light" width="140" height="43">
       <h3 class="serif" id="loginTitle">Entrar</h3>
       <p class="muted">Acompanhe seus horários ou acesse o painel do barbeiro.</p>
       <form id="loginForm" class="login" novalidate>
@@ -582,6 +647,10 @@
   <script src="js/booking.js" defer></script>
   <script src="js/auth.js" defer></script>
   <script src="js/panel.js" defer></script>
+  <script src="js/theme.js" defer></script>
+  <script src="js/faq.js" defer></script>
+  <script src="js/location.js" defer></script>
+  <script src="js/neon.js" defer></script>
   <script src="js/main.js" defer></script>
 </body>
 </html>
