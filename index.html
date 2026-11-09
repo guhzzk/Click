@@ -223,6 +223,44 @@
             <div class="days" id="daysList"></div>
             <h3 class="step__title">Escolha o horário</h3>
             <div class="slots" id="slotsList"><p class="muted">Selecione um dia primeiro.</p></div>
+
+            <!-- Fila de espera: aparece quando o dia escolhido está lotado -->
+            <div class="waitlist" id="waitlist" hidden>
+              <button class="waitlist__cta" id="wlOpen" type="button" aria-expanded="false" aria-controls="wlPanel">
+                <span class="waitlist__icon" aria-hidden="true">📅</span>
+                <span class="waitlist__txt">
+                  <b>Agenda Lotada? Entre na Fila de Espera Premium!</b>
+                  <small>Seja avisado assim que um horário abrir em <span id="wlDateLabel"></span>.</small>
+                </span>
+                <span class="waitlist__arrow" aria-hidden="true">→</span>
+              </button>
+              <div class="waitlist__panel" id="wlPanel">
+                <form class="waitlist__form" id="wlForm" novalidate>
+                  <div class="form">
+                    <label class="field">
+                      <span>Nome</span>
+                      <input type="text" id="wlName" autocomplete="name" placeholder="Seu nome">
+                    </label>
+                    <label class="field">
+                      <span>WhatsApp</span>
+                      <input type="tel" id="wlPhone" autocomplete="tel" inputmode="tel" placeholder="(41) 90000-0000">
+                    </label>
+                    <div class="field field--full">
+                      <span>Período desejado</span>
+                      <div class="seg">
+                        <label><input type="radio" name="wlPeriod" value="manha" checked><span>☀️ Manhã</span></label>
+                        <label><input type="radio" name="wlPeriod" value="tarde"><span>🌇 Tarde</span></label>
+                      </div>
+                    </div>
+                  </div>
+                  <button class="btn btn--red btn--block" type="submit">Entrar na Fila</button>
+                </form>
+                <div class="waitlist__done" role="status">
+                  <span class="waitlist__check"><svg viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24" fill="none" stroke="currentColor" stroke-width="3"/><path d="m15 27 8 8 15-17" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                  <p id="wlDoneText"></p>
+                </div>
+              </div>
+            </div>
             <div class="step__nav">
               <button class="btn btn--text" data-prev>Voltar</button>
               <button class="btn btn--dark" data-next>Continuar</button>
@@ -448,16 +486,36 @@
       <span class="kicker">Pagamento via Pix</span>
       <h3 class="serif" id="pixTitle">R$ 0,00</h3>
       <p class="muted" id="pixDesc"></p>
-      <div class="pix__qr" id="pixQr"></div>
-      <label class="field field--full">
-        <span>Pix copia e cola</span>
-        <textarea id="pixCode" rows="3" readonly></textarea>
-      </label>
+      <div class="pix-body">
+        <div class="pix__qr" id="pixQr"></div>
+        <label class="field field--full">
+          <span>Pix copia e cola</span>
+          <textarea id="pixCode" rows="3" readonly></textarea>
+        </label>
+      </div>
+
+      <!-- Status do pagamento (aguardando -> confirmado) -->
+      <div class="pix-status" id="pixStatus" hidden aria-live="polite">
+        <div class="pix-status__wait">
+          <span class="pix-spinner" aria-hidden="true"></span>
+          <div>
+            <b>Aguardando pagamento…</b>
+            <small>Confirmação automática · <span id="pixTimer">00:00</span></small>
+          </div>
+        </div>
+        <div class="pix-status__ok">
+          <span class="pix-check"><svg viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24" fill="none" stroke="currentColor" stroke-width="3"/><path d="m15 27 8 8 15-17" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <b>Pagamento Confirmado com Sucesso! 🎉</b>
+          <small id="pixOkInfo">Detectado automaticamente via webhook</small>
+        </div>
+      </div>
+
       <div class="modal__actions">
         <button class="btn btn--dark" id="pixCopy">Copiar código</button>
+        <button class="btn btn--green" id="pixContinue" hidden>Concluir →</button>
         <button class="btn btn--whats" id="pixDone">Já paguei, enviar no WhatsApp</button>
       </div>
-      <p class="fineprint">Após pagar, envie o comprovante na conversa do WhatsApp.</p>
+      <p class="fineprint" id="pixHint">Após pagar, envie o comprovante na conversa do WhatsApp.</p>
     </div>
   </div>
 
@@ -537,6 +595,7 @@
         <button class="ptab is-active" data-ptab="agenda">Agenda</button>
         <button class="ptab" data-ptab="novo">+ Novo horário</button>
         <button class="ptab" data-ptab="renda">Renda</button>
+        <button class="ptab" data-ptab="ia">🤖 Assistente IA</button>
       </div>
 
       <div data-ppane="agenda">
@@ -546,7 +605,50 @@
           <button data-filter="todos">Todos</button>
           <button data-filter="cancelados">Cancelados</button>
         </div>
+        <div class="panel-waitlist" id="panelWaitlist" hidden></div>
         <div id="panelList"></div>
+      </div>
+
+      <div data-ppane="ia" hidden>
+        <div class="ai">
+          <div class="ai-head">
+            <div>
+              <span class="pill-preview">Prévia do upgrade</span>
+              <h3 class="serif">🤖 Assistente de IA &amp; WhatsApp</h3>
+              <p class="muted">Responde clientes, oferece encaixes e agenda sozinho, 24 horas por dia.</p>
+            </div>
+            <button class="ai-switch is-on" id="aiSwitch" type="button" role="switch" aria-checked="true">
+              <span class="ai-switch__track" aria-hidden="true"><span class="ai-switch__thumb"></span></span>
+              <span class="ai-switch__label">Status do Chatbot: <b id="aiStatusText">Ativo</b></span>
+            </button>
+          </div>
+
+          <div class="ai-grid">
+            <div class="ai-phone">
+              <div class="ai-phone__bar">
+                <span class="ai-avatar" aria-hidden="true">R</span>
+                <div><b>Rafael</b><small id="aiPeerStatus">online</small></div>
+                <span class="ai-badge">IA respondendo</span>
+              </div>
+              <div class="ai-chat" id="aiChat" aria-live="polite"></div>
+              <div class="ai-paused-note">⏸️ Assistente pausado. Novas mensagens ficam para você responder.</div>
+              <div class="ai-phone__input">
+                <span>Mensagem</span>
+                <button class="btn btn--text btn--sm" id="aiReplay" type="button" hidden>↻ Repetir demonstração</button>
+              </div>
+            </div>
+
+            <aside class="ai-side">
+              <div class="ai-stats">
+                <div class="ai-stat"><b>23</b><span>conversas hoje</span></div>
+                <div class="ai-stat"><b>7</b><span>agendados pela IA</span></div>
+                <div class="ai-stat"><b>4s</b><span>resposta média</span></div>
+              </div>
+              <h4 class="list-title">Atividade recente</h4>
+              <ul class="ai-log" id="aiLog"></ul>
+            </aside>
+          </div>
+        </div>
       </div>
 
       <div data-ppane="renda" hidden>
@@ -565,6 +667,15 @@
 
       <div data-ppane="novo" hidden>
         <form id="newForm" class="newform" novalidate>
+          <div class="smartfit" id="smartFit">
+            <button type="button" class="smartfit__btn" id="smartFitBtn" role="switch" aria-checked="false">
+              <span class="smartfit__icon" aria-hidden="true">⚡</span>
+              <span class="smartfit__txt"><b>Permitir Encaixe Inteligente</b><small id="smartFitState">Desativado</small></span>
+              <span class="ai-switch__track" aria-hidden="true"><span class="ai-switch__thumb"></span></span>
+            </button>
+            <p class="smartfit__desc">Quando ativado, o sistema recalcula seus tempos de corte e abre brechas de 15 min na agenda para clientes VIP.</p>
+            <div class="smartfit__gaps" id="smartFitGaps"></div>
+          </div>
           <div class="seg">
             <label><input type="radio" name="nKind" value="agendamento" checked><span>Agendar cliente</span></label>
             <label><input type="radio" name="nKind" value="bloqueio"><span>Bloquear horários</span></label>
@@ -652,6 +763,7 @@
   <script src="js/faq.js" defer></script>
   <script src="js/location.js" defer></script>
   <script src="js/neon.js" defer></script>
+  <script src="js/premium.js" defer></script>
   <script src="js/main.js" defer></script>
 </body>
 </html>

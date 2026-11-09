@@ -12,6 +12,14 @@ const CONFIG = {
   pixKey: '',
   pixName: 'CORTEZA BARBEARIA', // até 25 caracteres, sem acento
   pixCity: 'ARAUCARIA',         // até 15 caracteres, sem acento
+
+  // MODO DEMONSTRAÇÃO — liga as simulações usadas para apresentar o upgrade:
+  // confirmação automática do Pix, próximo sábado lotado com fila de espera
+  // e assistente de IA no painel. Nada disso tem integração real ainda.
+  // Coloque false antes de abrir o site para clientes de verdade.
+  // (A confirmação automática do Pix nunca roda se houver chave Pix real.)
+  demoMode: true,
+  pixAutoConfirmMs: 5000, // tempo até o "webhook" confirmar o Pix na demonstração
   barber: 'Guilherme',
   address: 'R. Mieceslau Jasiocha, 66 - Thomaz Coelho, Araucária - PR, 83707-200',
   // Opcional: coordenadas exatas da porta (deixam a rota do Maps/Waze mais precisa).

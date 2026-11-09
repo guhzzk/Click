@@ -22,8 +22,9 @@ function showPanelTab(tab) {
   });
   renderPanelStats();
   if (tab === 'agenda') renderPanel();
-  if (tab === 'novo') prepareNewForm();
+  if (tab === 'novo') { prepareNewForm(); SmartFit.render(); }
   if (tab === 'renda') renderReport();
+  if (tab === 'ia') AI.start(); else AI.stop();
 }
 
 /** Redesenha o que estiver visível depois de uma mudança nos dados */
@@ -98,6 +99,7 @@ function bookingRow(b, i) {
 }
 
 function renderPanel() {
+  renderWaitlistPanel();
   $$('[data-filter]').forEach((b) => b.classList.toggle('is-active', b.dataset.filter === panel.filter));
   const list = filteredBookings();
   const box = $('#panelList');
@@ -474,7 +476,7 @@ function initPanel() {
   renderNewServices();
   maskPhone($('#nPhone'));
 
-  $('#panelClose').addEventListener('click', () => closeModal(el));
+  $('#panelClose').addEventListener('click', () => { AI.stop(); closeModal(el); });
   $('#panelLogout').addEventListener('click', logout);
 
   el.addEventListener('click', (e) => {
