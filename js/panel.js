@@ -95,9 +95,14 @@ function bookingRow(b, i) {
     : `<span class="pbk__value">${b.total ? brl(b.total) : 'Sob consulta'}<small>${b.pay === 'pix' ? (b.paid ? 'Pix pago' : 'Pix') : 'na barbearia'}</small></span>`;
   const badgeCls = block ? (b.status === 'agendado' ? 'bloqueio' : 'cancelado') : b.status;
   const badgeTxt = block ? (b.status === 'agendado' ? 'Bloqueado' : 'Liberado') : STATUS_LABEL[b.status];
-  const wa = !block && b.phone && b.status === 'agendado'
-    ? `<a class="icon-btn icon-btn--whats" href="${whatsUrl(`Olá, ${b.name.split(' ')[0]}! Aqui é o ${CONFIG.barber} da Corteza. Confirmando seu horário de ${formatDateLong(b.date)} às ${b.time}. 💈`, b.phone)}" target="_blank" rel="noopener" aria-label="WhatsApp de ${esc(b.name)}">WhatsApp</a>`
-    : '';
+  // Mensagens do barbeiro (js/messages.js): cada botão abre o WhatsApp com o texto dele
+  const msgBtn = (key, label) => {
+    const href = Messages.link(key, b.phone, Messages.bookingData(b));
+    return href ? `<a class="icon-btn icon-btn--whats" href="${href}" target="_blank" rel="noopener" aria-label="${label} para ${esc(b.name)} pelo WhatsApp">${label}</a>` : '';
+  };
+  const wa = block ? '' : b.status === 'agendado' ? msgBtn('confirm', 'Confirmar') + msgBtn('noshow', 'Lembrete')
+    : b.status === 'concluido' ? msgBtn('review', 'Pedir avaliação')
+    : msgBtn('cancel', 'Avisar cliente');
   return `
     <article class="pbk pbk--${b.status} ${block ? 'pbk--block' : ''} ${panel.highlight === b.id ? 'is-new' : ''}" style="--i:${i}" data-booking="${b.id}">
       <div class="pbk__time"><span class="pbk__date">${dateChip}</span>${b.time}${b.endTime ? `<small>até ${b.endTime}</small>` : ''}</div>

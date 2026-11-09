@@ -1,7 +1,8 @@
 /* ==========================================================
    Área administrativa do painel (barbeiro)
-   Telas: Visão Geral · Agenda · Catálogo de Serviços ·
-          Controle de Estoque · Automação
+   Telas: Visão Geral · Agenda · Financeiro · Catálogo de Serviços ·
+          Controle de Estoque · Automação (mensagens: js/messages.js,
+          financeiro: js/finance.js)
    A agenda (lista, filtros e novo horário) fica em js/panel.js.
    Tudo é salvo no navegador (localStorage).
    ========================================================== */
@@ -27,7 +28,8 @@ function showView(view) {
   if (view === 'agenda') { renderAgendaStatus(); showPanelTab(['agenda', 'novo'].includes(panel.tab) ? panel.tab : 'agenda'); }
   if (view === 'catalogo') Catalog.render();
   if (view === 'estoque') Stock.render();
-  if (view === 'automacao') Automation.render();
+  if (view === 'financeiro') Finance.render();
+  if (view === 'automacao') Messages.render();
 }
 
 const fmtShortDate = (iso) => { const d = addDays(iso, 0); return `${pad(d.d)}/${pad(d.m + 1)}`; };
@@ -54,6 +56,16 @@ const Overview = {
       alert.innerHTML = `<span aria-hidden="true">⚠️</span>
         <p><b>Estoque baixo:</b> ${low.map((p) => `${esc(p.name)} (${p.qty})`).join(', ')}</p>
         <button class="btn btn--sm btn--gold" data-view-go="estoque">Ver estoque</button>`;
+    }
+
+    // Contas a pagar no mês
+    const fin = Finance.totals(nowLocal().iso.slice(0, 7));
+    const bills = $('#ovBills');
+    bills.hidden = !fin.pending;
+    if (fin.pending) {
+      bills.innerHTML = `<span aria-hidden="true">💸</span>
+        <p><b>Contas a pagar:</b> ${brl(fin.pending)} em ${MONTH_NAME[nowLocal().m - 1]} · resultado do mês até agora ${brl(fin.resultado)}</p>
+        <button class="btn btn--sm btn--gold" data-view-go="financeiro">Ver financeiro</button>`;
     }
 
     // Próximos horários
@@ -328,6 +340,8 @@ const Stock = {
     $('#stCost').value = p ? String(p.cost).replace('.', ',') : '';
     $('#stPrice').value = p ? String(p.price).replace('.', ',') : '';
     $('#stQty').value = p ? p.qty : '';
+    $('#stBuyWrap').hidden = !!p; // só ao cadastrar
+    $('#stBuy').checked = true;
     toggleForm($('#stockForm'), true);
     setTimeout(() => $('#stName').focus(), 50);
   },
@@ -344,11 +358,14 @@ const Stock = {
     if (!Number.isInteger(qty) || qty < 0) { $('#stQty').focus(); return toast('Digite a quantidade'); }
     const list = this.list();
     const data = { name, cost, price, qty };
+    const buy = !this.editing && $('#stBuy').checked && qty > 0;
     if (this.editing) Object.assign(list.find((p) => p.id === this.editing), data);
     else list.push({ id: 'st-' + uidShort(), ...data });
     this.save(list);
+    // Compra registrada como despesa no Financeiro
+    if (buy) Finance.addExpense({ desc: `Compra de estoque: ${name} (${qty} un.)`, cat: 'Compra de estoque', value: Math.round(cost * qty * 100) / 100 });
     toggleForm($('#stockForm'), false);
-    toast(this.editing ? 'Produto atualizado ✓' : 'Produto cadastrado ✓');
+    toast(this.editing ? 'Produto atualizado ✓' : `Produto cadastrado ✓${buy ? ` · compra de ${brl(cost * qty)} lançada no Financeiro` : ''}`);
     if (qty <= LOW_STOCK) setTimeout(() => toast(`⚠️ Estoque baixo: ${name} (${qty})`), 1300);
     this.editing = null;
     this.render();
@@ -390,36 +407,6 @@ function toggleForm(form, open) {
   if (!open) form.reset();
 }
 
-/* ==========================================================
-   AUTOMAÇÃO — liga/desliga lembretes e mensagens
-   ========================================================== */
-const Automation = {
-  KEY: 'corteza_automacoes',
-  DEFAULTS: { noshow: true, confirm: true, fila: true, review: false, birthday: true },
-
-  state() { return { ...this.DEFAULTS, ...(store(this.KEY) || {}) }; },
-
-  render() {
-    const t = this.state();
-    $$('[data-auto]').forEach((b) => {
-      const on = !!t[b.dataset.auto];
-      b.classList.toggle('is-on', on);
-      b.setAttribute('aria-checked', String(on));
-    });
-    $('#autoCount').textContent = `${Object.values(t).filter(Boolean).length} de ${Object.keys(t).length} ativas`;
-  },
-
-  init() {
-    $$('[data-auto]').forEach((b) => b.addEventListener('click', () => {
-      const t = this.state();
-      t[b.dataset.auto] = !t[b.dataset.auto];
-      store(this.KEY, t);
-      this.render();
-      toast(t[b.dataset.auto] ? 'Ativado' : 'Desativado');
-    }));
-  },
-};
-
 /* ----------------------------------------------------------
    INIT
    ---------------------------------------------------------- */
@@ -431,6 +418,7 @@ function initAdmin() {
   });
   Catalog.init();
   Stock.init();
-  Automation.init();
+  Finance.init();
+  Messages.init();
   renderNewServices();
 }
