@@ -33,24 +33,24 @@ Com `demoMode: true` em `js/config.js`, o site mostra recursos simulados para ap
 
 - **Pix com confirmação automática:** depois de copiar o código, aparece "Aguardando pagamento…" e, em 5 s, "Pagamento Confirmado com Sucesso! 🎉" (webhook simulado). Só roda sem chave Pix real.
 - **Fila de espera:** o próximo sábado aparece lotado e o cliente pode entrar na fila (manhã/tarde). O barbeiro vê a fila na aba Agenda do painel.
-- **Assistente de IA & WhatsApp:** aba no painel com conversa simulada, log de atividades e botão de ativar/pausar.
 - **Encaixe Inteligente:** botão em "+ Novo horário" que mostra brechas de 15 min sugeridas.
 
 Nada disso tem integração real: antes de abrir o site para clientes, coloque `demoMode: false`.
 Sem o modo demonstração, a fila de espera continua funcionando de verdade (aparece só em dias realmente lotados e envia o pedido pelo WhatsApp da barbearia).
 
-## Área administrativa (painel do barbeiro)
-Entre como `barbeiro1`. O painel abre com menu lateral (no celular, menu deslizante no topo) e cinco telas:
+## Painel do barbeiro
+Entre como `barbeiro1`. Menu com cinco telas (troca instantânea):
 
-| Tela | O que tem | Dados |
-|---|---|---|
-| Visão Geral | "Sua Barbearia no Piloto Automático 🚀", contadores, hoje na cadeira, antes × depois, próximos horários | contadores de exemplo; hoje e próximos horários reais |
-| Agenda Multiprofissional | Guilherme (Cadeira 1) + vaga para Cadeira 2, agenda, novo horário, bloqueios, encaixe inteligente | reais |
-| Clube de Assinaturas | velocímetro de previsibilidade de caixa, assinantes por plano (ONE/BLACK), alertas e renovações | exemplo (preço do BLACK estimado) |
-| Financeiro & IA | calculadora de saúde financeira (custos editáveis), precificação inteligente e relatório de renda | custos de exemplo editáveis; relatório real |
-| Configurações de Automação | badge de conexão com a API do WhatsApp, automações liga/desliga, lembrete de no-show, árvore do robô e assistente de IA | simulação |
+| Tela | O que faz |
+|---|---|
+| Visão Geral | Hoje, a receber, faturado hoje e faturado no mês; alerta de estoque baixo; próximos horários; relatório de renda (dia, semana, mês) |
+| Agenda | Filtros Hoje, Amanhã, Esta Semana e Ver Todos; cada horário com dia, hora, cliente, serviço e valor; "Marcar como Concluído" soma no faturamento e dá baixa nos produtos do atendimento; "+ Novo horário" e bloqueio por intervalo |
+| Catálogo de Serviços | Cadastrar, editar e excluir serviços (nome, preço, duração, incluso no plano). Os serviços aparecem no "+ Novo horário" |
+| Controle de Estoque | Cadastrar produtos (nome, custo, venda, quantidade), ajustar quantidade, margem e alerta de "Estoque Baixo" (3 unidades ou menos) |
+| Automação | Liga/desliga dos lembretes e mensagens automáticas |
 
-Os dados de exemplo ficam em `ADMIN_DEMO`, no início de `js/admin.js`.
+No modo demonstração, a primeira abertura do painel preenche a semana com horários de exemplo (botão "Remover exemplos" na agenda) e o estoque com a linha El Guapo.
+Os preços mostrados aos clientes no site continuam vindo de `js/config.js`; o catálogo vale para o painel deste navegador.
 
 ## Antes de publicar
 Edite `js/config.js`:
@@ -78,7 +78,7 @@ js/booking.js     agendamento e Pix
 js/auth.js        login e área do cliente
 js/panel.js       painel do barbeiro
 js/premium.js     recursos premium (Pix automático, fila, IA, encaixe)
-js/admin.js       área administrativa (telas, financeiro, clube, automação)
+js/admin.js       painel: navegação, visão geral, catálogo, estoque e automação
 js/main.js        inicialização
 vendor/qrcode.js  gerador de QR Code (MIT)
 ```

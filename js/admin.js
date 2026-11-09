@@ -1,561 +1,424 @@
 /* ==========================================================
-   Área administrativa premium (painel do barbeiro)
-   - Navegação SPA entre 5 telas
-   - Visão Geral: "Piloto Automático" + contadores
-   - Agenda Multiprofissional: profissionais + agenda real
-   - Clube de Assinaturas: diagnóstico e previsibilidade de caixa
-   - Financeiro & IA: saúde financeira + precificação inteligente
-   - Automação: WhatsApp, lembrete de no-show e fluxo do robô
-
-   Os números de clube, mensagens e custos são DADOS DE
-   DEMONSTRAÇÃO (abaixo). Agenda e relatório de renda usam os
-   dados reais salvos no navegador.
+   Área administrativa do painel (barbeiro)
+   Telas: Visão Geral · Agenda · Catálogo de Serviços ·
+          Controle de Estoque · Automação
+   A agenda (lista, filtros e novo horário) fica em js/panel.js.
+   Tudo é salvo no navegador (localStorage).
    ========================================================== */
 
-/* ----------------------------------------------------------
-   DADOS DE DEMONSTRAÇÃO
-   ---------------------------------------------------------- */
-const ADMIN_DEMO = {
-  // Visão geral (semana)
-  kpis: { confirmed: 42, messages: 187, recovered: 5, pixSynced: 38, pixValue: 2946.2 },
-
-  // Clube Corteza: assinantes por plano.
-  // Os planos BLACK não têm preço publicado: o valor abaixo é ESTIMADO para a demonstração.
-  club: [
-    { id: 'one-corte', name: 'ONE · Corte', members: 14, price: 79.9 },
-    { id: 'one-corte-sob', name: 'ONE · Corte + Sobrancelha', members: 6, price: 99.9 },
-    { id: 'one-corte-barba', name: 'ONE · Corte + Barba', members: 8, price: 129.9 },
-    { id: 'one-completo', name: 'ONE · Completo', members: 3, price: 159.9 },
-    { id: 'black-corte-barba', name: 'BLACK · Corte & Barba', members: 5, price: 199.9, estimated: true },
-  ],
-  renewals: [
-    { name: 'Rafael Moreira', plan: 'ONE · Corte + Barba', days: 1, price: 129.9 },
-    { name: 'Bruno Kowalski', plan: 'BLACK · Corte & Barba', days: 2, price: 199.9 },
-    { name: 'Lucas Andrade', plan: 'ONE · Corte', days: 3, price: 79.9 },
-    { name: 'Matheus Ribas', plan: 'ONE · Completo', days: 5, price: 159.9 },
-    { name: 'Felipe Zanon', plan: 'ONE · Corte', days: 6, price: 79.9 },
-  ],
-  retention: 92,     // % de assinantes que renovaram nos últimos 90 dias
-  atRisk: 4,         // assinantes sem visita há 20+ dias
-
-  // Financeiro (mês)
-  finance: {
-    avulsos: 128,        // atendimentos avulsos por mês
-    ticket: 52.4,        // ticket médio dos avulsos
-    produtos: 640,       // venda de produtos El Guapo
-    cadeiras: 1,
-    taxaCartao: 1.8,     // % média de taxas (maquininha)
-    custos: { aluguel: 2200, energia: 420, insumos: 780, sistema: 189, contador: 350, outros: 300 },
-  },
-
-  // Volume mensal por serviço (precificação inteligente)
-  volume: { corte: 62, barba: 18, sobrancelha: 14, 'c-corte-sobrancelha': 16, 'c-corte-barba': 22, 'c-barba-sobrancelha': 6, 'c-completo': 9 },
-
-  // Antes x depois da automação
-  contrast: [
-    { label: 'Tempo no WhatsApp por dia', before: '3h10', after: '18 min', ratio: 0.09 },
-    { label: 'Faltas (no-show) no mês', before: '14', after: '3', ratio: 0.21 },
-    { label: 'Horários vagos sem cliente', before: '22', after: '6', ratio: 0.27 },
-  ],
-};
-
-const COST_LABEL = { aluguel: 'Aluguel', energia: 'Energia e água', insumos: 'Produtos e insumos', sistema: 'Sistema e marketing', contador: 'Contador', outros: 'Outros' };
-const ELASTICITY = { baixa: 0.4, media: 0.8, alta: 1.3 }; // % de clientes perdidos para cada 1% de aumento
-
-const admin = { view: 'geral', flowTimer: null, flowRun: 0, noShowRun: 0 };
+const admin = { view: 'geral' };
 
 /* ----------------------------------------------------------
-   NAVEGAÇÃO SPA
+   NAVEGAÇÃO ENTRE TELAS (instantânea, só troca de classe)
    ---------------------------------------------------------- */
 function showView(view) {
   admin.view = view;
+  AgendaSeed.ensure(); // demonstração: semana com horários de exemplo (só na primeira vez)
   $$('[data-view]').forEach((b) => {
     const on = b.dataset.view === view;
     b.classList.toggle('is-active', on);
     if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   });
   $$('.admin-view').forEach((s) => s.classList.toggle('is-active', s.dataset.viewPane === view));
-  // Volta ao topo do painel ao trocar de tela
   const p = $('#panel');
-  if (p.scrollTop > 120) p.scrollTo({ top: 0, behavior: reduceMotion() ? 'auto' : 'smooth' });
+  if (p.scrollTop > 120) p.scrollTo({ top: 0, behavior: 'auto' });
 
-  if (view !== 'automacao') { AI.stop(); Automation.stop(); }
-  if (view === 'geral') { renderPanelStats(); Overview.render(); }
-  if (view === 'agenda') { Pros.render(); showPanelTab(['agenda', 'novo'].includes(panel.tab) ? panel.tab : 'agenda'); }
-  if (view === 'clube') Club.render();
-  if (view === 'financeiro') { Finance.render(); Pricing.render(); renderReport(); }
-  if (view === 'automacao') { Automation.start(); AI.start(); }
-}
-
-/* ----------------------------------------------------------
-   UTILITÁRIOS
-   ---------------------------------------------------------- */
-/** Anima um número de 0 até o valor (formatado por fmt) */
-function countUp(el, to, fmt = (v) => Math.round(v).toLocaleString('pt-BR'), ms = 1300) {
-  cancelAnimationFrame(el._raf);
-  if (reduceMotion()) { el.textContent = fmt(to); return; }
-  const t0 = performance.now();
-  const step = (t) => {
-    const k = Math.min(1, (t - t0) / ms);
-    const eased = 1 - Math.pow(1 - k, 3);
-    el.textContent = fmt(to * eased);
-    if (k < 1) el._raf = requestAnimationFrame(step);
-  };
-  el._raf = requestAnimationFrame(step);
-}
-
-/** Aplica um valor numérico em uma variável CSS animada (gráficos) */
-function animateVar(el, name, value) {
-  el.style.setProperty(name, 0);
-  requestAnimationFrame(() => requestAnimationFrame(() => el.style.setProperty(name, value)));
-}
-
-/** Dias de funcionamento do mês atual: { all: [...iso], elapsed: n } */
-function monthBusinessDays() {
-  const now = nowLocal();
-  const first = `${now.y}-${pad(now.m)}-01`;
-  const days = [];
-  for (let i = 0; i < 31; i++) {
-    const d = addDays(first, i);
-    if (d.m !== now.m - 1) break;
-    if (CONFIG.hours[d.dow]) days.push(d.iso);
-  }
-  return { all: days, elapsed: days.filter((d) => d <= now.iso).length };
+  if (view === 'geral') { renderPanelStats(); Overview.render(); renderReport(); }
+  if (view === 'agenda') { renderAgendaStatus(); showPanelTab(['agenda', 'novo'].includes(panel.tab) ? panel.tab : 'agenda'); }
+  if (view === 'catalogo') Catalog.render();
+  if (view === 'estoque') Stock.render();
+  if (view === 'automacao') Automation.render();
 }
 
 const fmtShortDate = (iso) => { const d = addDays(iso, 0); return `${pad(d.d)}/${pad(d.m + 1)}`; };
+const uidShort = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+/** Converte "1.234,56" / "45,90" / "45.9" em número (ou null se vazio) */
+function parseMoney(v) {
+  const s = String(v ?? '').trim();
+  if (!s) return null;
+  const n = parseFloat(s.replace(/[^\d,.-]/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'));
+  return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null;
+}
 
 /* ==========================================================
    VISÃO GERAL
    ========================================================== */
 const Overview = {
   render() {
-    const k = ADMIN_DEMO.kpis;
-    countUp($('#kpiConfirmed'), k.confirmed);
-    countUp($('#kpiMessages'), k.messages);
-    countUp($('#kpiRecovered'), k.recovered);
-    countUp($('#kpiPix'), k.pixSynced);
-    $('#kpiPixValue').textContent = brl(k.pixValue);
+    // Alerta de estoque baixo
+    const low = Stock.lowItems();
+    const alert = $('#ovStockAlert');
+    alert.hidden = !low.length;
+    if (low.length) {
+      alert.innerHTML = `<span aria-hidden="true">⚠️</span>
+        <p><b>Estoque baixo:</b> ${low.map((p) => `${esc(p.name)} (${p.qty})`).join(', ')}</p>
+        <button class="btn btn--sm btn--gold" data-view-go="estoque">Ver estoque</button>`;
+    }
 
-    // Antes x depois
-    $('#ovContrast').innerHTML = ADMIN_DEMO.contrast.map((c, i) => `
-      <div class="vs-row" style="--i:${i}">
-        <span class="vs-row__label">${c.label}</span>
-        <div class="vs-bar vs-bar--before"><span style="--w:100%"></span><b>${c.before}</b></div>
-        <div class="vs-bar vs-bar--after"><span style="--w:${Math.max(6, c.ratio * 100)}%"></span><b>${c.after}</b></div>
-      </div>`).join('');
-
-    // Próximos horários (dados reais da agenda)
-    const today = nowLocal().iso;
-    const next = DB.all().filter((b) => b.kind === 'agendamento' && b.status === 'agendado' && b.date >= today && !b.demo).slice(0, 5);
+    // Próximos horários
+    const now = nowLocal();
+    const next = DB.all().filter((b) => b.kind === 'agendamento' && b.status === 'agendado' && !b.demo
+      && (b.date > now.iso || (b.date === now.iso && toMinutes(b.time) >= now.minutes - CONFIG.slotMinutes))).slice(0, 6);
     $('#ovUpcoming').innerHTML = next.length ? next.map((b) => `
       <li>
-        <time><b>${b.time}</b>${b.date === today ? 'hoje' : fmtShortDate(b.date)}</time>
+        <time><b>${b.time}</b>${b.date === now.iso ? 'hoje' : `${WEEK_SHORT[addDays(b.date, 0).dow]} ${fmtShortDate(b.date)}`}</time>
         <span><strong>${esc(b.name)}</strong><small>${esc(bookingItemsText(b))}</small></span>
         <em>${b.total ? brl(b.total) : '—'}</em>
-      </li>`).join('') : '<li class="empty">Nenhum horário futuro. Os próximos agendamentos aparecem aqui.</li>';
+      </li>`).join('') : '<li class="empty">Nenhum horário pela frente.</li>';
   },
 };
 
 /* ==========================================================
-   AGENDA MULTIPROFISSIONAL — profissionais
+   AGENDA — status do Guilherme e horários de exemplo
    ========================================================== */
-const Pros = {
-  render() {
-    const now = nowLocal();
-    const h = CONFIG.hours[now.dow];
-    const today = DB.all().filter((b) => b.date === now.iso && b.kind === 'agendamento' && b.status !== 'cancelado');
-    const inSlot = today.find((b) => now.minutes >= toMinutes(b.time) && now.minutes < toMinutes(b.time) + CONFIG.slotMinutes);
-    let status = 'Fora do expediente', cls = 'off';
-    if (h && now.minutes >= h[0] * 60 && now.minutes < h[1] * 60) {
-      status = inSlot ? `Atendendo ${inSlot.name.split(' ')[0]}` : 'Livre agora';
-      cls = inSlot ? 'busy' : 'free';
-    }
-    $('#proMain').innerHTML = `
-      <span class="pro__avatar">G</span>
-      <div class="pro__info">
-        <b>${esc(CONFIG.barber)}</b>
-        <small>Barbeiro · Cadeira 1</small>
-        <span class="pro__status pro__status--${cls}"><i></i>${status}</span>
-      </div>
-      <div class="pro__count"><b>${today.length}</b><small>horário${today.length === 1 ? '' : 's'} hoje</small></div>`;
-  },
-};
+function renderAgendaStatus() {
+  const now = nowLocal();
+  const h = CONFIG.hours[now.dow];
+  const today = DB.all().filter((b) => b.date === now.iso && b.kind === 'agendamento' && b.status !== 'cancelado');
+  const inSlot = today.find((b) => b.status === 'agendado' && now.minutes >= toMinutes(b.time) && now.minutes < toMinutes(b.time) + CONFIG.slotMinutes);
+  let status = 'Fora do expediente', cls = 'off';
+  if (h && now.minutes >= h[0] * 60 && now.minutes < h[1] * 60) {
+    status = inSlot ? `Atendendo ${inSlot.name.split(' ')[0]}` : 'Livre agora';
+    cls = inSlot ? 'busy' : 'free';
+  }
+  $('#agendaStatus').innerHTML = `<i></i>${esc(CONFIG.barber)} · ${status}`;
+  $('#agendaStatus').className = `pro__status pro__status--${cls}`;
+}
 
-/* ==========================================================
-   CLUBE DE ASSINATURAS — diagnóstico
-   ========================================================== */
-const clubMRR = () => ADMIN_DEMO.club.reduce((s, p) => s + p.members * p.price, 0);
-const clubMembers = () => ADMIN_DEMO.club.reduce((s, p) => s + p.members, 0);
+/** No modo demonstração, preenche a semana com horários de exemplo (uma vez) */
+const AgendaSeed = {
+  KEY: 'corteza_agenda_exemplo',
+  NAMES: ['Rafael Moreira', 'Bruno Kowalski', 'Lucas Andrade', 'Matheus Ribas', 'Felipe Zanon', 'Diego Prado', 'Thiago Lemos', 'André Souza', 'Caio Nogueira', 'Vitor Hugo', 'Gabriel Costa', 'Pedro Lima'],
 
-const Club = {
-  render() {
-    const mrr = clubMRR();
-    const f = Finance.compute();
-    const pct = Math.round(f.previsibilidade * 100);
-
-    countUp($('#clubMRR'), mrr, (v) => brl(v));
-    $('#clubPct').textContent = `${pct}%`;
-    animateVar($('#clubGauge'), '--p', pct);
-    animateVar($('#clubProgress'), '--p', pct);
-    $('#clubGaugeNote').textContent = `de ${brl(f.fat)} previstos para ${MONTH_NAME[nowLocal().m - 1]}`;
-
-    const max = Math.max(...ADMIN_DEMO.club.map((p) => p.members * p.price));
-    $('#clubPlans').innerHTML = ADMIN_DEMO.club.map((p, i) => {
-      const v = p.members * p.price;
-      return `
-        <div class="plan-row ${p.id.startsWith('black') ? 'plan-row--black' : ''}" style="--i:${i}">
-          <div class="plan-row__top"><b>${p.name}${p.estimated ? '<sup>*</sup>' : ''}</b><span>${p.members} assinantes</span><strong>${brl(v)}</strong></div>
-          <div class="plan-row__bar"><span style="--w:${(v / max) * 100}%"></span></div>
-        </div>`;
-    }).join('') + `<p class="fineprint fineprint--left">* Preço do BLACK estimado para a demonstração.</p>`;
-    $('#clubTotals').textContent = `${clubMembers()} assinantes ativos`;
-
-    const migrate = 6, onePrice = PLANS.one[0].price;
-    $('#clubInsights').innerHTML = `
-      <div class="insight insight--good"><span>📈</span><p><b>Retenção de ${ADMIN_DEMO.retention}%</b> nos últimos 90 dias. Acima da média do setor.</p></div>
-      <div class="insight insight--warn"><span>⚠️</span><p><b>${ADMIN_DEMO.atRisk} assinantes sem visita há 20+ dias.</b> Risco de cancelamento.</p>
-        <button class="btn btn--sm btn--gold" data-admin-toast="Lembrete enviado pelo robô para ${ADMIN_DEMO.atRisk} assinantes 🤖">Enviar lembrete pelo robô</button></div>
-      <div class="insight insight--tip"><span>💡</span><p>Se <b>${migrate} clientes avulsos frequentes</b> migrarem para o ONE Corte, a recorrência sobe para <b>${brl(mrr + migrate * onePrice)}</b>/mês.</p></div>`;
-
+  ensure() {
+    if (!isDemo() || store(this.KEY)) return;
     const today = nowLocal().iso;
-    $('#clubRenewals').innerHTML = ADMIN_DEMO.renewals.map((r) => `
-      <li>
-        <span class="ren__date">${fmtShortDate(addDays(today, r.days).iso)}</span>
-        <span class="ren__who"><b>${r.name}</b><small>${r.plan}</small></span>
-        <span class="ren__val">${brl(r.price)}<small>Pix automático</small></span>
-      </li>`).join('');
+    const week = DB.all().some((b) => !b.demo && b.kind === 'agendamento' && b.date >= today && b.date <= addDays(today, 6).iso);
+    store(this.KEY, true);
+    if (week) return;
+
+    const services = Catalog.list().filter((s) => s.price != null && ['corte', 'barba', 'sobrancelha', 'c-corte-barba', 'c-corte-sobrancelha', 'c-completo'].includes(s.id));
+    const items = [];
+    let n = 0;
+    for (let i = 0; i < 7; i++) {
+      const day = addDays(today, i);
+      if (!CONFIG.hours[day.dow]) continue;
+      const slots = daySlots(day.iso).filter((m) => !DB.isTaken(day.iso, toHHMM(m)));
+      const count = day.dow === 6 ? 7 : 4 + (i % 2);
+      // Espalha os horários pelo dia
+      const step = Math.max(1, Math.floor(slots.length / count));
+      for (let k = 0; k < count && k * step < slots.length; k++) {
+        const s = services[(n + k) % services.length];
+        const name = this.NAMES[n % this.NAMES.length];
+        items.push({
+          kind: 'agendamento', status: 'agendado', sample: true, origin: n % 3 ? 'site' : 'barbeiro',
+          date: day.iso, time: toHHMM(slots[k * step + (n % 2)] ?? slots[k * step]),
+          items: [s.id], total: s.price, ask: false, pay: n % 4 === 0 ? 'pix' : 'local', paid: n % 4 === 0,
+          name, phone: `(41) 9${String(8800 + n * 37).padStart(4, '0')}-${String(1000 + n * 113).slice(-4)}`,
+        });
+        n++;
+      }
+    }
+    DB.addMany(items);
+  },
+
+  clear() {
+    DB.removeWhere((b) => b.sample);
+    toast('Horários de exemplo removidos');
   },
 };
 
 /* ==========================================================
-   FINANCEIRO — calculadora de saúde financeira
+   CATÁLOGO DE SERVIÇOS
    ========================================================== */
-const Finance = {
-  KEY: 'corteza_financeiro_v1',
+const DEFAULT_DURATION = {
+  corte: 30, barba: 30, sobrancelha: 15, cavanhaque: 15, hidratacao: 30, limpeza: 40, ozonio: 40, depilacao: 15, pintura: 45,
+  'c-corte-sobrancelha': 45, 'c-corte-barba': 60, 'c-barba-sobrancelha': 45, 'c-completo': 75, nevou: 90,
+};
+const IN_PLAN = ['corte', 'barba', 'sobrancelha', 'c-corte-sobrancelha', 'c-corte-barba', 'c-barba-sobrancelha', 'c-completo'];
 
-  /** Parâmetros: os da demonstração, sobrescritos pelo que o barbeiro editou */
-  params() {
-    const saved = store(this.KEY) || {};
-    const base = ADMIN_DEMO.finance;
-    return { ...base, ...saved, custos: { ...base.custos, ...(saved.custos || {}) } };
+const Catalog = {
+  KEY: 'corteza_catalogo_v1',
+  editing: null,
+
+  /** Lista salva; na primeira vez nasce dos serviços do site (js/config.js) */
+  list() {
+    let list = store(this.KEY);
+    if (!list) {
+      list = [...SERVICES.avulsos, ...SERVICES.combos, ...SERVICES.quimicas].map((s) => ({
+        id: s.id, name: s.name, price: s.price, duration: DEFAULT_DURATION[s.id] || 30, plan: IN_PLAN.includes(s.id), fromSite: true,
+      }));
+      store(this.KEY, list);
+    }
+    return list;
   },
 
-  save(patch) {
-    const cur = store(this.KEY) || {};
-    store(this.KEY, { ...cur, ...patch, custos: { ...(cur.custos || {}), ...(patch.custos || {}) } });
+  save(list) {
+    store(this.KEY, list);
+    this.syncItems();
+    renderNewServices();
   },
 
-  compute(extraRevenue = 0) {
-    const p = this.params();
-    const mrr = clubMRR();
-    const avulsoRev = p.avulsos * p.ticket + extraRevenue;
-    const fat = avulsoRev + mrr + p.produtos;
-    const fixed = Object.values(p.custos).reduce((s, v) => s + (+v || 0), 0);
-    const fees = (avulsoRev + p.produtos) * (p.taxaCartao / 100);
-    const costs = fixed + fees;
-    const profit = fat - costs;
-    const margin = fat > 0 ? profit / fat : 0;
+  get: (id) => Catalog.list().find((s) => s.id === id),
 
-    const bd = monthBusinessDays();
-    const progress = bd.all.length ? bd.elapsed / bd.all.length : 0;
-    const realized = profit * progress;
-
-    // Ponto de equilíbrio: em que dia de funcionamento o faturamento cobre os custos
-    const beIndex = fat > 0 ? Math.ceil((costs / fat) * bd.all.length) : bd.all.length;
-    const beDate = bd.all[Math.min(Math.max(beIndex, 1), bd.all.length) - 1];
-
-    // Custo por cadeira (mês e por hora aberta)
-    const hoursOpen = bd.all.reduce((s, iso) => { const h = CONFIG.hours[addDays(iso, 0).dow]; return s + (h[1] - h[0]); }, 0);
-    const chair = costs / Math.max(1, p.cadeiras);
-    const chairHour = chair / Math.max(1, hoursOpen); // cada cadeira fica aberta todas as horas do mês
-
-    const previsibilidade = fat > 0 ? mrr / fat : 0;
-    const score = Math.round(Math.max(0, Math.min(100, 38 + margin * 52 + previsibilidade * 30)));
-    return { p, mrr, avulsoRev, fat, fixed, fees, costs, profit, margin, progress, realized, bd, beDate, beIndex, chair, chairHour, previsibilidade, score };
-  },
-
-  renderCosts() {
-    const p = this.params();
-    const field = (key, label, value, step = 10) => `
-      <label class="cost-field"><span>${label}</span>
-        <div class="cost-input"><em>R$</em><input type="number" inputmode="decimal" min="0" step="${step}" data-cost="${key}" value="${value}"></div>
-      </label>`;
-    $('#finCosts').innerHTML = Object.entries(p.custos).map(([k, v]) => field(k, COST_LABEL[k] || k, v)).join('');
-    $('#finVolume').innerHTML = `
-      <label class="cost-field"><span>Atendimentos avulsos/mês</span><div class="cost-input"><input type="number" min="0" step="1" data-fin="avulsos" value="${p.avulsos}"></div></label>
-      <label class="cost-field"><span>Ticket médio avulso</span><div class="cost-input"><em>R$</em><input type="number" min="0" step="0.5" data-fin="ticket" value="${p.ticket}"></div></label>
-      <label class="cost-field"><span>Venda de produtos/mês</span><div class="cost-input"><em>R$</em><input type="number" min="0" step="10" data-fin="produtos" value="${p.produtos}"></div></label>`;
+  /** Serviços criados no painel passam a valer na agenda (nomes e valores) */
+  syncItems() {
+    this.list().forEach((s) => {
+      if (!ALL_ITEMS[s.id] || ALL_ITEMS[s.id].custom) ALL_ITEMS[s.id] = { id: s.id, name: s.name, price: s.price, type: 'servico', cat: 'catalogo', custom: true };
+    });
   },
 
   render() {
-    if (!$('#finCosts').children.length) this.renderCosts();
-    this.update(true);
+    const list = this.list();
+    const priced = list.filter((s) => s.price != null);
+    const avg = priced.length ? priced.reduce((t, s) => t + s.price, 0) / priced.length : 0;
+    $('#catSummary').innerHTML = `
+      <div><b>${list.length}</b><span>serviços</span></div>
+      <div><b>${list.filter((s) => s.plan).length}</b><span>inclusos no plano</span></div>
+      <div><b>${brl(avg)}</b><span>preço médio</span></div>`;
+    $('#catList').innerHTML = list.length ? list.map((s) => `
+      <div class="erp-row" data-id="${s.id}">
+        <div class="erp-row__main"><b>${esc(s.name)}</b><small>${s.duration} min</small></div>
+        <span class="erp-row__price">${s.price != null ? brl(s.price) : 'Sob consulta'}</span>
+        <span class="badge ${s.plan ? 'badge--concluido' : 'badge--cancelado'}">${s.plan ? 'No plano' : 'Avulso'}</span>
+        <div class="erp-row__actions">
+          <button class="icon-btn" data-cat-edit="${s.id}">Editar</button>
+          <button class="icon-btn icon-btn--danger" data-cat-del="${s.id}" aria-label="Excluir ${esc(s.name)}">Excluir</button>
+        </div>
+      </div>`).join('') : '<p class="empty">Nenhum serviço cadastrado.</p>';
   },
 
-  /** Recalcula e atualiza a tela (animate = contagem animada) */
-  update(animate) {
-    const f = this.compute();
-    const set = (id, v) => (animate ? countUp($(id), v, (x) => brl(x)) : ($(id).textContent = brl(v)));
-    set('#finFat', f.fat);
-    set('#finProfit', f.realized);
-    set('#finChair', f.chair);
-    $('#finFatSub').textContent = `${brl(f.avulsoRev)} avulsos + ${brl(f.mrr)} clube + ${brl(f.p.produtos)} produtos`;
-    $('#finProfitSub').textContent = `até hoje · ${f.bd.elapsed} de ${f.bd.all.length} dias de funcionamento (${brl(f.profit)} no mês)`;
-    $('#finChairSub').textContent = `por mês · ${brl(f.chairHour)} por hora aberta`;
-    $('#finMargin').textContent = `${Math.round(f.margin * 100)}%`;
-    $('#finCostsTotal').textContent = brl(f.costs);
-    $('#finBreakEven').textContent = f.beDate ? fmtShortDate(f.beDate) : '—';
-    $('#finBreakEvenSub').textContent = f.beDate ? `${f.beIndex}º dia de funcionamento` : '';
+  openForm(id) {
+    const s = id ? this.get(id) : null;
+    this.editing = id || null;
+    $('#catFormTitle').textContent = s ? 'Editar serviço' : 'Novo serviço';
+    $('#catName').value = s ? s.name : '';
+    $('#catPrice').value = s && s.price != null ? String(s.price).replace('.', ',') : '';
+    $('#catDuration').value = s ? s.duration : 30;
+    $('#catPlan').checked = s ? !!s.plan : false;
+    toggleForm($('#catForm'), true);
+    setTimeout(() => $('#catName').focus(), 50);
+  },
 
-    const label = f.score >= 75 ? 'Saudável' : f.score >= 50 ? 'Atenção' : 'Crítico';
-    const ring = $('#finScore');
-    ring.dataset.level = f.score >= 75 ? 'good' : f.score >= 50 ? 'warn' : 'bad';
-    $('#finScoreLabel').textContent = label;
-    if (animate) { animateVar(ring, '--s', f.score); countUp($('#finScoreNum'), f.score); }
-    else { ring.style.setProperty('--s', f.score); $('#finScoreNum').textContent = f.score; }
+  submit(e) {
+    e.preventDefault();
+    const name = $('#catName').value.trim();
+    const price = parseMoney($('#catPrice').value);
+    const duration = Math.max(5, parseInt($('#catDuration').value, 10) || 0);
+    if (name.length < 2) { $('#catName').focus(); return toast('Digite o nome do serviço'); }
+    if ($('#catPrice').value.trim() && price == null) { $('#catPrice').focus(); return toast('Preço inválido'); }
+    const list = this.list();
+    const data = { name, price, duration, plan: $('#catPlan').checked };
+    if (this.editing) Object.assign(list.find((s) => s.id === this.editing), data);
+    else list.push({ id: 'svc-' + uidShort(), ...data });
+    this.save(list);
+    toggleForm($('#catForm'), false);
+    toast(this.editing ? 'Serviço atualizado ✓' : 'Serviço cadastrado ✓');
+    this.editing = null;
+    this.render();
+  },
+
+  remove(id) {
+    const s = this.get(id);
+    if (!s || !confirm(`Excluir "${s.name}" do catálogo?`)) return;
+    this.save(this.list().filter((x) => x.id !== id));
+    toast('Serviço excluído');
+    this.render();
   },
 
   init() {
-    $('#finEditor').addEventListener('input', (e) => {
-      const t = e.target;
-      const v = Math.max(0, parseFloat(t.value) || 0);
-      if (t.dataset.cost) this.save({ custos: { [t.dataset.cost]: v } });
-      if (t.dataset.fin) this.save({ [t.dataset.fin]: v });
-      this.update(false);
-      Pricing.render(true);
-    });
-    $('#finReset').addEventListener('click', () => {
-      store(this.KEY, null);
-      this.renderCosts();
-      this.update(true);
-      Pricing.render(true);
-      toast('Valores de exemplo restaurados');
+    this.syncItems();
+    $('#catNew').addEventListener('click', () => this.openForm(null));
+    $('#catCancel').addEventListener('click', () => toggleForm($('#catForm'), false));
+    $('#catForm').addEventListener('submit', (e) => this.submit(e));
+    $('#catList').addEventListener('click', (e) => {
+      const ed = e.target.closest('[data-cat-edit]');
+      const del = e.target.closest('[data-cat-del]');
+      if (ed) this.openForm(ed.dataset.catEdit);
+      if (del) this.remove(del.dataset.catDel);
     });
   },
 };
 
 /* ==========================================================
-   PRECIFICAÇÃO INTELIGENTE
+   CONTROLE DE ESTOQUE
    ========================================================== */
-const Pricing = {
-  state: { id: 'corte', price: null, sens: 'media' },
+const LOW_STOCK = 3;
 
-  services() {
-    return [...SERVICES.avulsos, ...SERVICES.combos].filter((s) => s.price != null && ADMIN_DEMO.volume[s.id]);
-  },
+const Stock = {
+  KEY: 'corteza_estoque_v1',
+  editing: null,
 
-  /** Clientes por mês num preço (demanda linear com a sensibilidade escolhida) */
-  volumeAt(s, price) {
-    const e = ELASTICITY[this.state.sens];
-    const q0 = ADMIN_DEMO.volume[s.id];
-    return Math.max(0, q0 * (1 - e * ((price - s.price) / s.price)));
-  },
-
-  /** Melhor preço (máxima receita) num intervalo de -10% a +25%, arredondado a R$ 5 */
-  suggestion(s) {
-    let best = { price: s.price, rev: s.price * ADMIN_DEMO.volume[s.id] };
-    for (let p = Math.ceil(s.price * 0.9); p <= Math.floor(s.price * 1.25); p++) {
-      const rev = p * this.volumeAt(s, p);
-      if (rev > best.rev + 0.01) best = { price: p, rev };
+  list() {
+    let list = store(this.KEY);
+    if (!list) {
+      // Demonstração: linha El Guapo com custos e quantidades de exemplo
+      list = isDemo() ? [
+        { id: 'st-oleo', productId: 'p-oleo', name: 'Óleo para barba El Guapo', cost: 27.5, price: 55, qty: 8 },
+        { id: 'st-balm', productId: 'p-balm', name: 'Balm para barba El Guapo', cost: 30, price: 60, qty: 3 },
+        { id: 'st-brilho', productId: 'p-brilho', name: 'Cera brilho El Guapo', cost: 32, price: 65, qty: 12 },
+        { id: 'st-matte', productId: 'p-matte', name: 'Cera matte El Guapo', cost: 32, price: 65, qty: 2 },
+      ] : [];
+      store(this.KEY, list);
     }
-    const rounded = Math.round(best.price / 5) * 5;
-    return { price: rounded, rev: rounded * this.volumeAt(s, rounded) };
+    return list;
   },
 
-  render(keep) {
-    const list = this.services();
-    const sel = $('#priceService');
-    if (!sel.options.length) sel.innerHTML = list.map((s) => `<option value="${s.id}">${s.name} — ${brl(s.price)}</option>`).join('');
-    sel.value = this.state.id;
-    const s = list.find((x) => x.id === this.state.id);
-    const slider = $('#priceSlider');
-    slider.min = Math.round(s.price * 0.5);
-    slider.max = Math.round(s.price * 1.5);
-    if (!keep || this.state.price == null) this.state.price = s.price;
-    slider.value = this.state.price;
-    $$('[data-sens]').forEach((b) => b.classList.toggle('is-active', b.dataset.sens === this.state.sens));
-    this.update();
+  save(list) { store(this.KEY, list); },
+  get: (id) => Stock.list().find((p) => p.id === id),
+  lowItems: () => Stock.list().filter((p) => p.qty <= LOW_STOCK),
+
+  /** Baixa (delta < 0) ou devolve (delta > 0) produtos vendidos num atendimento */
+  moveByProduct(productId, delta) {
+    const list = this.list();
+    const item = list.find((p) => p.productId === productId);
+    if (!item) return null;
+    item.qty = Math.max(0, item.qty + delta);
+    this.save(list);
+    return item;
   },
 
-  update() {
-    const s = this.services().find((x) => x.id === this.state.id);
-    const price = +this.state.price;
-    const q0 = ADMIN_DEMO.volume[s.id];
-    const q1 = this.volumeAt(s, price);
-    const rev0 = s.price * q0;
-    const rev1 = price * q1;
-    const delta = rev1 - rev0;
-    const base = Finance.compute();
-    const total1 = base.fat + delta;
-    const pctPrice = ((price - s.price) / s.price) * 100;
-    const slider = $('#priceSlider');
-    slider.style.setProperty('--fill', `${((price - slider.min) / (slider.max - slider.min)) * 100}%`);
+  render() {
+    const list = this.list();
+    const low = this.lowItems();
+    const units = list.reduce((t, p) => t + p.qty, 0);
+    const costValue = list.reduce((t, p) => t + p.qty * p.cost, 0);
+    const profit = list.reduce((t, p) => t + p.qty * (p.price - p.cost), 0);
+    $('#stockSummary').innerHTML = `
+      <div><b>${list.length}</b><span>produtos</span></div>
+      <div><b>${units}</b><span>unidades</span></div>
+      <div><b>${brl(costValue)}</b><span>em estoque (custo)</span></div>
+      <div><b>${brl(profit)}</b><span>lucro se vender tudo</span></div>`;
 
-    $('#priceNow').textContent = brl(s.price);
-    $('#priceNew').textContent = brl(price);
-    $('#priceNewPct').textContent = `${pctPrice >= 0 ? '+' : ''}${pctPrice.toFixed(0)}%`;
-    $('#priceNewPct').className = pctPrice > 0 ? 'up' : pctPrice < 0 ? 'down' : '';
-    $('#priceClients').textContent = `${Math.round(q0)} → ${Math.round(q1)} clientes/mês`;
-    $('#priceRev0').textContent = brl(base.fat);
-    $('#priceRev1').textContent = brl(total1);
-    const max = Math.max(base.fat, total1);
-    $('#priceBar0').style.setProperty('--w', `${(base.fat / max) * 100}%`);
-    $('#priceBar1').style.setProperty('--w', `${(total1 / max) * 100}%`);
-    const impact = $('#priceImpact');
-    impact.textContent = `${delta >= 0 ? '+' : '−'}${brl(Math.abs(delta))}/mês`;
-    impact.className = `price-impact ${delta > 0.5 ? 'up' : delta < -0.5 ? 'down' : ''}`;
-    const pctTotal = ((delta / base.fat) * 100).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-    $('#priceImpactPct').textContent = `${delta >= 0 ? '+' : ''}${pctTotal}% no faturamento mensal`;
+    const alert = $('#stockAlert');
+    alert.hidden = !low.length;
+    alert.innerHTML = low.length
+      ? `<span aria-hidden="true">⚠️</span><p><b>Estoque Baixo:</b> ${low.length} produto${low.length === 1 ? '' : 's'} com ${LOW_STOCK} unidades ou menos. Hora de repor.</p>`
+      : '';
 
-    const sug = this.suggestion(s);
-    const gain = sug.rev - rev0;
-    $('#priceTip').innerHTML = sug.price === s.price || gain < 1
-      ? `💡 <b>Sugestão da IA:</b> ${s.name} já está no preço ideal para a sensibilidade escolhida.`
-      : `💡 <b>Sugestão da IA:</b> cobrar <b>${brl(sug.price)}</b> no ${s.name} aumenta a receita em <b>${brl(gain)}/mês</b>, com ${Math.round(this.volumeAt(s, sug.price))} clientes por mês.`;
-    $('#priceApply').hidden = sug.price === s.price || gain < 1 || sug.price === price;
-    $('#priceApply').dataset.price = sug.price;
+    $('#stockList').innerHTML = list.length ? list.map((p) => {
+      const margin = p.price > 0 ? Math.round(((p.price - p.cost) / p.price) * 100) : 0;
+      const isLow = p.qty <= LOW_STOCK;
+      return `
+        <div class="erp-row ${isLow ? 'erp-row--low' : ''}" data-id="${p.id}">
+          <div class="erp-row__main">
+            <b>${esc(p.name)}</b>
+            <small>Custo ${brl(p.cost)} · Venda ${brl(p.price)} · Margem ${margin}%</small>
+          </div>
+          <div class="qty" role="group" aria-label="Quantidade de ${esc(p.name)}">
+            <button class="qty__btn" data-qty="-1" data-id="${p.id}" aria-label="Diminuir">−</button>
+            <b class="qty__val">${p.qty}</b>
+            <button class="qty__btn" data-qty="1" data-id="${p.id}" aria-label="Aumentar">+</button>
+          </div>
+          ${isLow ? `<span class="badge badge--low">${p.qty === 0 ? 'Sem estoque' : 'Estoque baixo'}</span>` : '<span class="badge badge--concluido">Em estoque</span>'}
+          <div class="erp-row__actions">
+            <button class="icon-btn" data-stock-edit="${p.id}">Editar</button>
+            <button class="icon-btn icon-btn--danger" data-stock-del="${p.id}" aria-label="Excluir ${esc(p.name)}">Excluir</button>
+          </div>
+        </div>`;
+    }).join('') : '<p class="empty">Nenhum produto cadastrado. Toque em “+ Cadastrar Produto”.</p>';
+  },
+
+  openForm(id) {
+    const p = id ? this.get(id) : null;
+    this.editing = id || null;
+    $('#stockFormTitle').textContent = p ? 'Editar produto' : 'Cadastrar produto';
+    $('#stName').value = p ? p.name : '';
+    $('#stCost').value = p ? String(p.cost).replace('.', ',') : '';
+    $('#stPrice').value = p ? String(p.price).replace('.', ',') : '';
+    $('#stQty').value = p ? p.qty : '';
+    toggleForm($('#stockForm'), true);
+    setTimeout(() => $('#stName').focus(), 50);
+  },
+
+  submit(e) {
+    e.preventDefault();
+    const name = $('#stName').value.trim();
+    const cost = parseMoney($('#stCost').value);
+    const price = parseMoney($('#stPrice').value);
+    const qty = parseInt($('#stQty').value, 10);
+    if (name.length < 2) { $('#stName').focus(); return toast('Digite o nome do produto'); }
+    if (cost == null) { $('#stCost').focus(); return toast('Digite o preço de custo'); }
+    if (price == null) { $('#stPrice').focus(); return toast('Digite o preço de venda'); }
+    if (!Number.isInteger(qty) || qty < 0) { $('#stQty').focus(); return toast('Digite a quantidade'); }
+    const list = this.list();
+    const data = { name, cost, price, qty };
+    if (this.editing) Object.assign(list.find((p) => p.id === this.editing), data);
+    else list.push({ id: 'st-' + uidShort(), ...data });
+    this.save(list);
+    toggleForm($('#stockForm'), false);
+    toast(this.editing ? 'Produto atualizado ✓' : 'Produto cadastrado ✓');
+    if (qty <= LOW_STOCK) setTimeout(() => toast(`⚠️ Estoque baixo: ${name} (${qty})`), 1300);
+    this.editing = null;
+    this.render();
+  },
+
+  remove(id) {
+    const p = this.get(id);
+    if (!p || !confirm(`Excluir "${p.name}" do estoque?`)) return;
+    this.save(this.list().filter((x) => x.id !== id));
+    toast('Produto excluído');
+    this.render();
   },
 
   init() {
-    $('#priceService').addEventListener('change', (e) => { this.state.id = e.target.value; this.render(false); });
-    $('#priceSlider').addEventListener('input', (e) => { this.state.price = +e.target.value; this.update(); });
-    $$('[data-sens]').forEach((b) => b.addEventListener('click', () => { this.state.sens = b.dataset.sens; this.render(true); }));
-    $('#priceApply').addEventListener('click', (e) => {
-      this.state.price = +e.currentTarget.dataset.price;
-      $('#priceSlider').value = this.state.price;
-      this.update();
-      toast('Preço sugerido aplicado na simulação');
+    $('#stockNew').addEventListener('click', () => this.openForm(null));
+    $('#stockCancel').addEventListener('click', () => toggleForm($('#stockForm'), false));
+    $('#stockForm').addEventListener('submit', (e) => this.submit(e));
+    $('#stockList').addEventListener('click', (e) => {
+      const q = e.target.closest('[data-qty]');
+      const ed = e.target.closest('[data-stock-edit]');
+      const del = e.target.closest('[data-stock-del]');
+      if (q) {
+        const list = this.list();
+        const p = list.find((x) => x.id === q.dataset.id);
+        p.qty = Math.max(0, p.qty + Number(q.dataset.qty));
+        this.save(list);
+        this.render();
+        if (p.qty <= LOW_STOCK && Number(q.dataset.qty) < 0) toast(`⚠️ Estoque baixo: ${p.name} (${p.qty})`);
+      }
+      if (ed) this.openForm(ed.dataset.stockEdit);
+      if (del) this.remove(del.dataset.stockDel);
     });
   },
 };
 
+/** Mostra/esconde o formulário de cadastro */
+function toggleForm(form, open) {
+  form.hidden = !open;
+  if (!open) form.reset();
+}
+
 /* ==========================================================
-   AUTOMAÇÃO & WHATSAPP
+   AUTOMAÇÃO — liga/desliga lembretes e mensagens
    ========================================================== */
-const Automation = (() => {
-  const KEY = 'corteza_automacoes';
-  const DEFAULTS = { noshow: true, confirm: true, fila: true, review: false, birthday: true };
-  const FLOW = {
-    1: { label: 'Agendar', reply: 'Tenho estes horários amanhã: 10:00 · 14:30 · 16:00. Toque no link para garantir o seu: corteza.app/agendar ✂️' },
-    2: { label: 'Endereço', reply: `Estamos na ${CONFIG.address}. Rota pronta no Google Maps ou no Waze 📍` },
-    3: { label: 'Planos', reply: `Club Corteza ONE a partir de ${brl(PLANS.one[0].price)}/mês, com cortes ilimitados* às segundas e terças. Quer conhecer o BLACK? 💈` },
-  };
+const Automation = {
+  KEY: 'corteza_automacoes',
+  DEFAULTS: { noshow: true, confirm: true, fila: true, review: false, birthday: true },
 
-  const toggles = () => ({ ...DEFAULTS, ...(store(KEY) || {}) });
+  state() { return { ...this.DEFAULTS, ...(store(this.KEY) || {}) }; },
 
-  function renderToggles() {
-    const t = toggles();
+  render() {
+    const t = this.state();
     $$('[data-auto]').forEach((b) => {
       const on = !!t[b.dataset.auto];
       b.classList.toggle('is-on', on);
       b.setAttribute('aria-checked', String(on));
     });
-    const active = Object.values(t).filter(Boolean).length;
-    $('#autoCount').textContent = `${active} de ${Object.keys(t).length} automações ativas`;
-    $('#autopilotCount').textContent = `${active} automações ativas`;
-  }
+    $('#autoCount').textContent = `${Object.values(t).filter(Boolean).length} de ${Object.keys(t).length} ativas`;
+  },
 
-  /** Cliente do lembrete: próximo horário real de hoje, ou um exemplo */
-  function noShowTarget() {
-    const now = nowLocal();
-    const next = DB.all().find((b) => b.kind === 'agendamento' && b.status === 'agendado' && b.date === now.iso && toMinutes(b.time) > now.minutes && !b.demo);
-    return next ? { name: next.name.split(' ')[0], time: next.time, real: true } : { name: 'Rafael', time: '17:30', real: false };
-  }
-
-  function renderNoShow() {
-    const t = noShowTarget();
-    const sendAt = toHHMM(Math.max(0, toMinutes(t.time) - 120));
-    $('#noShowMsg').innerHTML = `Olá <b>${esc(t.name)}</b>, seu horário com o ${esc(CONFIG.barber)} é hoje às <b>${t.time}</b>. 💈<br>Responda <b>1</b> para confirmar ou <b>2</b> para remarcar.`;
-    $('#noShowWhen').textContent = `Disparo automático às ${sendAt} (2h antes)${t.real ? ' · próximo cliente da agenda' : ''}`;
-    $$('#noShowStatus li').forEach((li) => li.classList.remove('is-done', 'is-current'));
-    $('#noShowStatus li').classList.add('is-done');
-    $('#noShowStatus li small').textContent = sendAt;
-    $('#noShowReply').classList.remove('is-shown');
-    $('#noShowSim').disabled = false;
-    $('#noShowSim').textContent = '▶ Simular disparo';
-  }
-
-  async function simulateNoShow() {
-    const id = ++admin.noShowRun;
-    const btn = $('#noShowSim');
-    btn.disabled = true;
-    btn.textContent = 'Disparando…';
-    const steps = $$('#noShowStatus li');
-    steps.forEach((li, i) => { li.classList.toggle('is-done', i === 0); li.classList.remove('is-current'); });
-    $('#noShowReply').classList.remove('is-shown');
-    const wait = (ms) => new Promise((r) => setTimeout(r, reduceMotion() ? 0 : ms));
-    const time = () => new Date().toLocaleTimeString('pt-BR', { timeZone: CONFIG.timezone, hour: '2-digit', minute: '2-digit' });
-    for (let i = 1; i < steps.length; i++) {
-      steps[i].classList.add('is-current');
-      await wait(i === steps.length - 1 ? 1300 : 900);
-      if (id !== admin.noShowRun) return;
-      steps[i].classList.remove('is-current');
-      steps[i].classList.add('is-done');
-      steps[i].querySelector('small').textContent = time();
-      if (i === steps.length - 1) $('#noShowReply').classList.add('is-shown');
-    }
-    btn.disabled = false;
-    btn.textContent = '↻ Simular de novo';
-    toast('Cliente confirmou presença ✓');
-  }
-
-  /** Destaca um ramo da árvore e mostra a resposta do robô */
-  async function showBranch(n, auto) {
-    const run = ++admin.flowRun;
-    if (!auto) clearTimeout(admin.flowTimer);
-    $$('.flow-branch').forEach((b) => b.classList.toggle('is-active', b.dataset.branch === String(n)));
-    $('#flowTree').dataset.active = n;
-    const out = $('#flowReply');
-    out.classList.remove('is-shown');
-    out.innerHTML = '<span class="ai-typing"><span></span><span></span><span></span></span>';
-    out.classList.add('is-typing');
-    await new Promise((r) => setTimeout(r, reduceMotion() ? 0 : 900));
-    if (run !== admin.flowRun) return;
-    out.classList.remove('is-typing');
-    out.innerHTML = `<small>🤖 Robô Corteza · resposta automática</small>${esc(FLOW[n].reply)}`;
-    out.classList.add('is-shown');
-    const c = $('#flowTouches');
-    c.textContent = String((+c.dataset.n || 0) + 1);
-    c.dataset.n = c.textContent;
-  }
-
-  /** Percorre 1 → 2 → 3 sozinho enquanto a tela estiver aberta */
-  function autoplay(n = 1) {
-    clearTimeout(admin.flowTimer);
-    if (admin.view !== 'automacao' || $('#panel').hidden) return;
-    showBranch(n, true);
-    admin.flowTimer = setTimeout(() => autoplay(n % 3 + 1), 4200);
-  }
-
-  function start() {
-    renderToggles();
-    renderNoShow();
-    $('#flowTouches').dataset.n = 0;
-    $('#flowTouches').textContent = '0';
-    autoplay(1);
-  }
-
-  function stop() {
-    clearTimeout(admin.flowTimer);
-    admin.flowRun++;
-    admin.noShowRun++;
-  }
-
-  function init() {
+  init() {
     $$('[data-auto]').forEach((b) => b.addEventListener('click', () => {
-      const t = toggles();
+      const t = this.state();
       t[b.dataset.auto] = !t[b.dataset.auto];
-      store(KEY, t);
-      renderToggles();
-      toast(t[b.dataset.auto] ? 'Automação ativada ⚡' : 'Automação pausada');
+      store(this.KEY, t);
+      this.render();
+      toast(t[b.dataset.auto] ? 'Ativado' : 'Desativado');
     }));
-    $('#noShowSim').addEventListener('click', simulateNoShow);
-    $$('.flow-branch').forEach((b) => b.addEventListener('click', () => showBranch(+b.dataset.branch, false)));
-  }
-
-  return { init, start, stop, renderToggles };
-})();
+  },
+};
 
 /* ----------------------------------------------------------
    INIT
@@ -563,13 +426,11 @@ const Automation = (() => {
 function initAdmin() {
   $$('[data-view]').forEach((b) => b.addEventListener('click', () => showView(b.dataset.view)));
   $('#panel').addEventListener('click', (e) => {
-    const t = e.target.closest('[data-admin-toast]');
-    if (t) toast(t.dataset.adminToast);
     const go = e.target.closest('[data-view-go]');
     if (go) showView(go.dataset.viewGo);
   });
-  Finance.init();
-  Pricing.init();
+  Catalog.init();
+  Stock.init();
   Automation.init();
-  Automation.renderToggles();
+  renderNewServices();
 }

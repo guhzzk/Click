@@ -27,9 +27,9 @@ function showPanelTab(tab) {
 /** Redesenha o que estiver visível depois de uma mudança nos dados */
 function refreshPanel() {
   renderPanelStats();
-  if (admin.view === 'geral') Overview.render();
-  if (admin.view === 'agenda') { Pros.render(); if (panel.tab === 'agenda') renderPanel(); }
-  if (admin.view === 'financeiro') renderReport();
+  if (admin.view === 'geral') { Overview.render(); renderReport(); }
+  if (admin.view === 'agenda') { renderAgendaStatus(); if (panel.tab === 'agenda') renderPanel(); }
+  if (admin.view === 'estoque') Stock.render();
   renderNextBooking();
   if (bookingStep() === 2) { renderDays(); renderSlots(); }
 }
@@ -40,58 +40,78 @@ function refreshPanel() {
 const sumAmount = (list) => list.reduce((s, r) => s + r.amount, 0);
 
 function renderPanelStats() {
-  const today = nowLocal().iso;
-  const all = DB.all().filter((b) => b.kind === 'agendamento' && b.status !== 'cancelado');
-  const hoje = all.filter((b) => b.date === today);
+  const now = nowLocal();
+  const all = DB.all().filter((b) => b.kind === 'agendamento' && b.status !== 'cancelado' && !b.demo);
+  const hoje = all.filter((b) => b.date === now.iso);
   const pendentes = hoje.filter((b) => b.status === 'agendado');
   const previsto = pendentes.reduce((s, b) => s + (b.total || 0), 0);
-  const faturado = sumAmount(DB.revenue().filter((r) => r.date === today));
+  const revenue = DB.revenue();
+  const faturadoHoje = sumAmount(revenue.filter((r) => r.date === now.iso));
+  const month = now.iso.slice(0, 7);
+  const doMes = revenue.filter((r) => r.date.startsWith(month));
   const feitos = hoje.filter((b) => b.status === 'concluido').length;
   $('#panelStats').innerHTML = `
     <div class="stat"><span>Hoje</span><b>${hoje.length}</b><small>${feitos} concluído${feitos === 1 ? '' : 's'}</small></div>
     <div class="stat"><span>A receber hoje</span><b>${brl(previsto)}</b><small>${pendentes.length} pendente${pendentes.length === 1 ? '' : 's'}</small></div>
-    <div class="stat stat--money"><span>Faturado hoje</span><b>${brl(faturado)}</b><small>atendimentos concluídos</small></div>`;
+    <div class="stat stat--money"><span>Faturado hoje</span><b>${brl(faturadoHoje)}</b><small>atendimentos concluídos</small></div>
+    <div class="stat stat--money"><span>Faturado no mês</span><b>${brl(sumAmount(doMes))}</b><small>${doMes.length} atendimento${doMes.length === 1 ? '' : 's'} em ${MONTH_NAME[now.m - 1]}</small></div>`;
 }
 
 /* ----------------------------------------------------------
    AGENDA
    ---------------------------------------------------------- */
-function filteredBookings() {
+/* Filtros de data da agenda */
+const AGENDA_FILTERS = {
+  hoje: { label: 'Hoje', from: 0, to: 0 },
+  amanha: { label: 'Amanhã', from: 1, to: 1 },
+  semana: { label: 'Esta Semana', from: 0, to: 6 },
+  todos: { label: 'Ver Todos' },
+};
+
+/** Intervalo de datas do filtro atual (null = sem limite) */
+function filterRange(filter = panel.filter) {
+  const f = AGENDA_FILTERS[filter];
+  if (!f || f.from == null) return null;
   const today = nowLocal().iso;
-  const all = DB.all();
-  switch (panel.filter) {
-    case 'hoje': return all.filter((b) => b.date === today && b.status !== 'cancelado');
-    case 'proximos': return all.filter((b) => b.date >= today && b.status === 'agendado');
-    case 'cancelados': return all.filter((b) => b.status === 'cancelado').reverse();
-    default: return all.filter((b) => !b.demo).reverse();
-  }
+  return { from: addDays(today, f.from).iso, to: addDays(today, f.to).iso };
+}
+
+/** Agendamentos do filtro: Hoje, Amanhã e Esta Semana sem cancelados; Ver Todos com tudo */
+function filteredBookings() {
+  const all = DB.all().filter((b) => !b.demo);
+  const range = filterRange();
+  if (range) return all.filter((b) => b.date >= range.from && b.date <= range.to && b.status !== 'cancelado');
+  // Ver Todos: de hoje em diante (ordem cronológica) e depois o histórico (mais recente primeiro)
+  const today = nowLocal().iso;
+  return [...all.filter((b) => b.date >= today), ...all.filter((b) => b.date < today).reverse()];
 }
 
 function bookingRow(b, i) {
   const block = b.kind === 'bloqueio';
-  const origin = block ? 'Bloqueio' : b.origin === 'barbeiro' ? 'Criado por você' : 'Pelo site';
-  const payInfo = b.status === 'concluido'
-    ? `Recebido ${brl(b.amount || 0)}${b.method ? ' · ' + esc(b.method) : ''}`
-    : `${b.total ? brl(b.total) : 'sob consulta'} · ${b.pay === 'pix' ? (b.paid ? 'Pix pago' : 'Pix') : 'na barbearia'}`;
+  const d = addDays(b.date, 0);
+  const dateChip = `${WEEK_SHORT[d.dow]} · ${pad(d.d)}/${pad(d.m + 1)}`;
+  const value = block ? '' : b.status === 'concluido'
+    ? `<span class="pbk__value pbk__value--paid">${brl(b.amount || 0)}<small>recebido${b.method ? ' · ' + esc(b.method) : ''}</small></span>`
+    : `<span class="pbk__value">${b.total ? brl(b.total) : 'Sob consulta'}<small>${b.pay === 'pix' ? (b.paid ? 'Pix pago' : 'Pix') : 'na barbearia'}</small></span>`;
   const badgeCls = block ? (b.status === 'agendado' ? 'bloqueio' : 'cancelado') : b.status;
   const badgeTxt = block ? (b.status === 'agendado' ? 'Bloqueado' : 'Liberado') : STATUS_LABEL[b.status];
-  const wa = !block && b.phone
-    ? `<a class="icon-btn icon-btn--whats" href="${whatsUrl(`Olá, ${b.name.split(' ')[0]}! Aqui é o ${CONFIG.barber} da Corteza. Confirmando seu horário de ${formatDateLong(b.date)} às ${b.time}. 💈`, b.phone)}" target="_blank" rel="noopener">WhatsApp</a>`
+  const wa = !block && b.phone && b.status === 'agendado'
+    ? `<a class="icon-btn icon-btn--whats" href="${whatsUrl(`Olá, ${b.name.split(' ')[0]}! Aqui é o ${CONFIG.barber} da Corteza. Confirmando seu horário de ${formatDateLong(b.date)} às ${b.time}. 💈`, b.phone)}" target="_blank" rel="noopener" aria-label="WhatsApp de ${esc(b.name)}">WhatsApp</a>`
     : '';
   return `
-    <article class="pbk pbk--${b.status} ${block ? 'pbk--block' : ''} ${panel.highlight === b.id ? 'is-new' : ''}" style="--i:${i}">
-      <div class="pbk__time">${b.time}${b.endTime ? `<small>até ${b.endTime}</small>` : ''}</div>
+    <article class="pbk pbk--${b.status} ${block ? 'pbk--block' : ''} ${panel.highlight === b.id ? 'is-new' : ''}" style="--i:${i}" data-booking="${b.id}">
+      <div class="pbk__time"><span class="pbk__date">${dateChip}</span>${b.time}${b.endTime ? `<small>até ${b.endTime}</small>` : ''}</div>
       <div class="pbk__main">
         <strong>${block ? 'Horário bloqueado' : esc(b.name)}</strong>
         <span>${esc(block ? (b.note || 'Indisponível para clientes') : bookingItemsText(b))}</span>
-        <small>${block ? '' : payInfo + ' · '}${origin}</small>
       </div>
+      ${value}
       <span class="badge badge--${badgeCls}">${badgeTxt}</span>
       <div class="pbk__actions">
-        ${wa}
-        ${b.status === 'agendado' && !block ? `<button class="icon-btn icon-btn--ok" data-act="done" data-id="${b.id}">✓ Marcar como concluído</button>` : ''}
+        ${b.status === 'agendado' && !block ? `<button class="icon-btn icon-btn--ok" data-act="done" data-id="${b.id}">✓ Marcar como Concluído</button>` : ''}
         ${b.status === 'agendado' ? `<button class="icon-btn" data-act="cancel" data-id="${b.id}">${block ? 'Liberar' : 'Cancelar'}</button>` : ''}
-        ${b.status !== 'agendado' && !block ? `<button class="icon-btn" data-act="restore" data-id="${b.id}">Reabrir</button>` : ''}
+        ${b.status !== 'agendado' && !block ? `<button class="icon-btn" data-act="restore" data-id="${b.id}">${b.status === 'concluido' ? 'Desfazer' : 'Reabrir'}</button>` : ''}
+        ${wa}
       </div>
     </article>`;
 }
@@ -100,26 +120,86 @@ function renderPanel() {
   renderWaitlistPanel();
   $$('[data-filter]').forEach((b) => b.classList.toggle('is-active', b.dataset.filter === panel.filter));
   const list = filteredBookings();
+  const today = nowLocal().iso;
+  const range = filterRange();
+
+  // Resumo do período: horários, previsto e recebido
+  const appts = list.filter((b) => b.kind === 'agendamento' && b.status !== 'cancelado');
+  const previsto = appts.filter((b) => b.status === 'agendado').reduce((t, b) => t + (b.total || 0), 0);
+  const recebido = appts.filter((b) => b.status === 'concluido').reduce((t, b) => t + (b.amount || 0), 0);
+  const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+  const rangeTxt = !range ? 'Todos os horários' : range.from === range.to ? cap(formatDateLong(range.from)) : `${fmtShortDate(range.from)} a ${fmtShortDate(range.to)}`;
+  const hasSamples = DB.all().some((b) => b.sample);
+  $('#agendaSummary').innerHTML = `
+    <span class="agenda-summary__range">${rangeTxt}</span>
+    <span><b>${appts.length}</b> horário${appts.length === 1 ? '' : 's'}</span>
+    <span><b>${brl(previsto)}</b> a receber</span>
+    <span class="agenda-summary__paid"><b>${brl(recebido)}</b> recebido</span>
+    ${hasSamples ? '<button class="btn btn--text btn--sm" data-agenda-clear-samples>Remover exemplos</button>' : ''}`;
+
   const box = $('#panelList');
-  if (!list.length) {
-    const msg = { hoje: 'Nenhum horário para hoje.', proximos: 'Nenhum agendamento futuro.', cancelados: 'Nenhum cancelamento.', todos: 'A agenda está vazia.' }[panel.filter];
-    box.innerHTML = `<div class="empty">${msg}<br><button class="btn btn--dark btn--sm" data-ptab-go="novo">+ Criar horário</button></div>`;
-    return;
-  }
   const groups = {};
   list.forEach((b) => (groups[b.date] = groups[b.date] || []).push(b));
-  const today = nowLocal().iso;
-  box.innerHTML = Object.entries(groups).map(([date, items]) => `
-    <section class="pday">
-      <h4>${date === today ? 'Hoje · ' : ''}${formatDateLong(date)}</h4>
-      ${items.map(bookingRow).join('')}
-    </section>`).join('');
+
+  // Esta Semana mostra os 7 dias, inclusive os livres e fechados (para planejar)
+  let dates = Object.keys(groups);
+  if (panel.filter === 'semana') dates = Array.from({ length: 7 }, (_, i) => addDays(today, i).iso);
+
+  if (!dates.length) {
+    const msg = { hoje: 'Nenhum horário para hoje.', amanha: 'Nenhum horário para amanhã.', todos: 'A agenda está vazia.' }[panel.filter];
+    box.innerHTML = `<div class="empty">${msg}<br><button class="btn btn--dark btn--sm" data-ptab-go="novo">+ Novo horário</button></div>`;
+    panel.highlight = null;
+    return;
+  }
+
+  let n = 0;
+  box.innerHTML = dates.map((date) => {
+    const items = groups[date] || [];
+    const d = addDays(date, 0);
+    const open = !!CONFIG.hours[d.dow];
+    const dayAppts = items.filter((b) => b.kind === 'agendamento' && b.status !== 'cancelado');
+    const dayTotal = dayAppts.reduce((t, b) => t + (b.status === 'concluido' ? (b.amount || 0) : (b.total || 0)), 0);
+    const title = `${date === today ? 'Hoje · ' : date === addDays(today, 1).iso ? 'Amanhã · ' : ''}${formatDateLong(date)}`;
+    const meta = !open && !items.length ? 'Fechado'
+      : `${dayAppts.length} horário${dayAppts.length === 1 ? '' : 's'}${dayAppts.length ? ' · ' + brl(dayTotal) : ''}`;
+    const body = items.length ? items.map((b) => bookingRow(b, n++)).join('')
+      : `<p class="pday__empty">${open ? 'Dia livre: nenhum horário marcado.' : 'Barbearia fechada.'}</p>`;
+    return `
+      <section class="pday ${!open && !items.length ? 'pday--closed' : ''}">
+        <h4><span>${title}</span><small>${meta}</small></h4>
+        ${body}
+      </section>`;
+  }).join('');
   panel.highlight = null;
 }
 
 /* ----------------------------------------------------------
    CONCLUIR ATENDIMENTO (lança o valor no faturamento)
    ---------------------------------------------------------- */
+/** Concluir: soma o valor no faturamento e dá baixa nos produtos do atendimento */
+function completeBooking(id, amount, method) {
+  const b = DB.get(id);
+  DB.complete(id, amount, method);
+  const moved = (b.items || []).filter((it) => ALL_ITEMS[it] && ALL_ITEMS[it].type === 'produto')
+    .map((it) => Stock.moveByProduct(it, -1)).filter(Boolean);
+  const low = moved.filter((p) => p.qty <= LOW_STOCK);
+  toast(`Concluído · ${brl(amount)} somado ao faturamento ✓${moved.length ? ` · ${moved.length} produto${moved.length === 1 ? '' : 's'} baixado${moved.length === 1 ? '' : 's'} do estoque` : ''}`);
+  if (low.length) setTimeout(() => toast(`⚠️ Estoque baixo: ${low.map((p) => `${p.name} (${p.qty})`).join(', ')}`), 2500);
+  refreshPanel();
+}
+
+/** Clique em "Marcar como Concluído" */
+function markDone(id) {
+  const b = DB.get(id);
+  if (b.total > 0 && !b.ask) {
+    completeBooking(id, b.total, b.pay === 'pix' && b.paid ? 'Pix' : null);
+    const row = document.querySelector(`[data-booking="${id}"]`);
+    if (row) { row.classList.add('just-done'); }
+    return;
+  }
+  openDone(id); // serviço sob consulta: pergunta o valor cobrado
+}
+
 function openDone(id) {
   const b = DB.get(id);
   panel.doneId = id;
@@ -137,10 +217,8 @@ function confirmDone(e) {
   const raw = $('#doneAmount').value.replace(/[^\d,.-]/g, '').replace(/\.(?=\d{3})/g, '').replace(',', '.');
   const amount = parseFloat(raw);
   if (!(amount >= 0) || raw === '') { toast('Digite o valor recebido'); $('#doneAmount').focus(); return; }
-  DB.complete(panel.doneId, amount, $('#doneMethod').value);
   closeModal($('#doneModal'));
-  toast(`Concluído · ${brl(amount)} somado ao faturamento ✓`);
-  refreshPanel();
+  completeBooking(panel.doneId, amount, $('#doneMethod').value);
 }
 
 /* ----------------------------------------------------------
@@ -418,9 +496,11 @@ function syncNewKind() {
 }
 
 function renderNewServices() {
-  const list = [...SERVICES.combos, ...SERVICES.avulsos, ...SERVICES.quimicas];
-  $('#nServices').innerHTML = list.map((s) => `
-    <label class="chip chip--check"><input type="checkbox" value="${s.id}"><span>${s.name}<small>${s.price != null ? 'R$ ' + brlShort(s.price) : 'consulta'}</small></span></label>`).join('');
+  const box = $('#nServices');
+  if (!box || typeof Catalog === 'undefined') return;
+  const checked = $$('input:checked', box).map((i) => i.value);
+  box.innerHTML = Catalog.list().map((s) => `
+    <label class="chip chip--check"><input type="checkbox" value="${s.id}" ${checked.includes(s.id) ? 'checked' : ''}><span>${esc(s.name)}<small>${s.price != null ? 'R$ ' + brlShort(s.price) : 'consulta'}</small></span></label>`).join('');
 }
 
 function submitNew(e) {
@@ -447,7 +527,7 @@ function submitNew(e) {
     if (DB.isTaken(date, time)) { renderNewSlots(); return toast('Esse horário já está ocupado'); }
     if (name.length < 2) { $('#nName').focus(); return toast('Digite o nome do cliente'); }
     if (!items.length) return toast('Escolha pelo menos um serviço');
-    const prices = items.map((id) => ALL_ITEMS[id].price);
+    const prices = items.map((id) => (Catalog.get(id) || ALL_ITEMS[id] || {}).price ?? null);
     saved = DB.add({
       kind: 'agendamento', date, time, items, name, phone: $('#nPhone').value.trim(),
       total: prices.reduce((s, p) => s + (p || 0), 0), ask: prices.some((p) => p == null),
@@ -460,7 +540,8 @@ function submitNew(e) {
   $('#newForm').reset();
   $(`input[name="nKind"][value="${kind}"]`).checked = true;
   $('#nDate').value = date;
-  panel.filter = date === nowLocal().iso ? 'hoje' : 'proximos';
+  const today = nowLocal().iso;
+  panel.filter = date === today ? 'hoje' : date === addDays(today, 1).iso ? 'amanha' : date <= addDays(today, 6).iso ? 'semana' : 'todos';
   panel.highlight = saved.id;
   showPanelTab('agenda');
   refreshPanel();
@@ -471,10 +552,9 @@ function submitNew(e) {
    ---------------------------------------------------------- */
 function initPanel() {
   const el = $('#panel');
-  renderNewServices();
   maskPhone($('#nPhone'));
 
-  $('#panelClose').addEventListener('click', () => { AI.stop(); Automation.stop(); closeModal(el); });
+  $('#panelClose').addEventListener('click', () => closeModal(el));
   $('#panelLogout').addEventListener('click', logout);
 
   el.addEventListener('click', (e) => {
@@ -486,6 +566,11 @@ function initPanel() {
 
     const f = e.target.closest('[data-filter]');
     if (f) { panel.filter = f.dataset.filter; renderPanel(); }
+
+    if (e.target.closest('[data-agenda-clear-samples]') && confirm('Remover os horários de exemplo da agenda?')) {
+      AgendaSeed.clear();
+      refreshPanel();
+    }
 
     const r = e.target.closest('[data-report]');
     if (r) { panel.report = r.dataset.report; renderReport(); }
@@ -500,7 +585,7 @@ function initPanel() {
     const act = e.target.closest('[data-act]');
     if (act) {
       const b = DB.get(act.dataset.id);
-      if (act.dataset.act === 'done') return openDone(b.id);
+      if (act.dataset.act === 'done') return markDone(b.id);
       if (act.dataset.act === 'cancel') {
         if (!confirm(b.kind === 'bloqueio' ? `Liberar ${b.endTime ? `das ${b.time} às ${b.endTime}` : 'este horário'}?` : `Cancelar o horário de ${b.name}?`)) return;
         DB.update(b.id, { status: 'cancelado' });
@@ -510,7 +595,9 @@ function initPanel() {
         if (b.status === 'cancelado' && DB.isTaken(b.date, b.time, b.id)) return toast('Esse horário já foi ocupado');
         const wasDone = b.status === 'concluido';
         DB.reopen(b.id);
-        toast(wasDone ? `Reaberto · ${brl(b.amount || 0)} retirado do faturamento` : 'Agendamento reaberto');
+        // Desfazer a conclusão devolve os produtos ao estoque
+        if (wasDone) (b.items || []).filter((it) => ALL_ITEMS[it] && ALL_ITEMS[it].type === 'produto').forEach((it) => Stock.moveByProduct(it, 1));
+        toast(wasDone ? `Desfeito · ${brl(b.amount || 0)} retirado do faturamento` : 'Agendamento reaberto');
       }
       refreshPanel();
     }
