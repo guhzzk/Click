@@ -8,7 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
     a.target = '_blank';
     a.rel = 'noopener';
   });
-  $('#routeBtn').href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(CONFIG.address)}&travelmode=driving`;
+  initTheme();
+  initLocationLinks();
+  initFaq();
 
   initMenu();
   initStatus();
@@ -27,4 +29,5 @@ document.addEventListener('DOMContentLoaded', () => {
   renderNextBooking();
   initImageFades();
   initReveal();
+  initNeon();
 });

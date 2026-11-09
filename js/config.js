@@ -14,6 +14,9 @@ const CONFIG = {
   pixCity: 'RIO DE JANEIRO',    // até 15 caracteres, sem acento
   barber: 'Guilherme',
   address: 'R. Mieceslau Jasiocha, 66 - Thomaz Coelho, Rio de Janeiro - RJ',
+  // Opcional: coordenadas exatas da porta (deixam a rota do Maps/Waze mais precisa).
+  // Ex.: { lat: -22.8370, lng: -43.3270 }. Com null, a rota usa o endereço acima.
+  coords: null,
   timezone: 'America/Sao_Paulo',
   slotMinutes: 30,
   minAdvanceMinutes: 15, // antecedência mínima para agendar no mesmo dia
