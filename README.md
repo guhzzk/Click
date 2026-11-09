@@ -18,8 +18,10 @@ Site estático: abra o `index.html` ou publique com o GitHub Pages.
 | Barbeiro | `barbeiro1` / barbeiro1@corteza.com | `barbeiro1` |
 
 - **Cliente:** vê e cancela os próprios agendamentos; nome e WhatsApp já vêm preenchidos.
-- **Barbeiro:** vê a agenda (hoje, próximos, todos, cancelados), conclui ou cancela
-  atendimentos, cria agendamentos para clientes e bloqueia horários.
+- **Barbeiro:** vê a agenda (hoje, próximos, todos, cancelados), cria agendamentos,
+  bloqueia intervalos de horário (ex.: 10:00 às 11:00) e marca atendimentos como
+  concluídos informando o valor recebido. A aba **Renda** mostra o faturamento
+  dia a dia, semana a semana e mês a mês (com botão para gerar dados de exemplo).
 
 > ⚠️ É um modo de demonstração. O site não tem servidor, então as contas ficam no
 > código e os agendamentos ficam salvos **só no navegador de cada aparelho**.

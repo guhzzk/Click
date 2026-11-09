@@ -107,13 +107,26 @@ function maskPhone(input) {
 }
 
 /* ---------- Modais ---------- */
+const MODAL_MS = 350; // duração da animação de abrir/fechar (igual ao CSS)
+
 function openModal(el) {
+  clearTimeout(el._closeT);
+  el.classList.remove('is-closing');
   el.hidden = false;
   document.body.classList.add('no-scroll');
   const focusable = el.querySelector('input, button:not([data-close])');
-  if (focusable) setTimeout(() => focusable.focus(), 50);
+  if (focusable) setTimeout(() => focusable.focus({ preventScroll: true }), 60);
 }
+
 function closeModal(el) {
-  el.hidden = true;
-  if (!$$('.modal, .lightbox, .panel').some((m) => !m.hidden)) document.body.classList.remove('no-scroll');
+  if (el.hidden) return;
+  const finish = () => {
+    el.hidden = true;
+    el.classList.remove('is-closing');
+    if (!$$('.modal, .lightbox, .panel').some((m) => !m.hidden)) document.body.classList.remove('no-scroll');
+  };
+  if (reduceMotion()) return finish();
+  el.classList.add('is-closing');
+  clearTimeout(el._closeT);
+  el._closeT = setTimeout(finish, MODAL_MS);
 }
