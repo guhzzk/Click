@@ -37,9 +37,15 @@
         <a href="#agendar" class="btn btn--red nav__cta">Agendar horário</a>
       </nav>
 
-      <button class="burger" id="burger" aria-label="Abrir menu" aria-expanded="false" aria-controls="nav">
-        <span></span><span></span><span></span>
-      </button>
+      <div class="header__actions">
+        <button class="account-btn" id="accountBtn" aria-label="Entrar na conta">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span>Entrar</span>
+        </button>
+        <button class="burger" id="burger" aria-label="Abrir menu" aria-expanded="false" aria-controls="nav">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -49,7 +55,7 @@
       <div class="hero__media" role="img" aria-label="Cadeira de barbeiro com o logo da Corteza Barbearia"></div>
       <div class="hero__content">
         <div class="container">
-          <span class="status" id="openStatus"><i></i><b>Verificando horário…</b></span>
+          <span class="status is-loading" id="openStatus"><i></i><b>Verificando horário…</b></span>
           <h1 class="hero__title">Seu visual em dia,<br><em>sem fila e sem pressa.</em></h1>
           <p class="hero__text">Atendimento exclusivo com o <strong>Guilherme</strong>, café cortesia e geladeira liberada. Escolha o serviço, o horário e confirme no WhatsApp em menos de 1 minuto.</p>
           <div class="hero__actions">
@@ -63,15 +69,15 @@
     <!-- Faixa de informações rápidas -->
     <section class="infobar" aria-label="Informações rápidas">
       <div class="container infobar__grid">
-        <div class="infobar__item">
+        <div class="infobar__item reveal" style="--i:0">
           <span class="infobar__label">Endereço</span>
           <span>R. Mieceslau Jasiocha, 66 · Thomaz Coelho</span>
         </div>
-        <div class="infobar__item">
+        <div class="infobar__item reveal" style="--i:1">
           <span class="infobar__label">Horário</span>
           <span>Ter a Sex 10h–20h · Sáb 9h–20h</span>
         </div>
-        <div class="infobar__item">
+        <div class="infobar__item reveal" style="--i:2">
           <span class="infobar__label">Barbeiro</span>
           <span>Guilherme · atendimento único</span>
         </div>
@@ -81,7 +87,7 @@
     <!-- ============ SERVIÇOS ============ -->
     <section class="section" id="servicos">
       <div class="container">
-        <header class="section__head">
+        <header class="section__head reveal">
           <span class="kicker">Tabela de serviços</span>
           <h2 class="display">Serviços</h2>
           <p class="section__sub">Toque em <strong>+ Adicionar</strong> para montar seu atendimento. Os itens vão direto para o agendamento.</p>
@@ -100,7 +106,7 @@
     <!-- ============ CLUB CORTEZA ============ -->
     <section class="section section--paper" id="club">
       <div class="container">
-        <header class="section__head">
+        <header class="section__head reveal">
           <span class="kicker kicker--green">clubcorteza</span>
           <h2 class="display">Planos de assinatura</h2>
           <p class="section__sub">Para quem não quer deixar o visual pra depois.</p>
@@ -120,7 +126,7 @@
     <!-- ============ PRODUTOS ============ -->
     <section class="section" id="produtos">
       <div class="container">
-        <header class="section__head">
+        <header class="section__head reveal">
           <span class="kicker">Linha El Guapo</span>
           <h2 class="display display--serif">Produtos</h2>
           <p class="section__sub">Reserve pelo site e retire no dia do seu atendimento.</p>
@@ -132,34 +138,34 @@
     <!-- ============ EXPERIÊNCIA ============ -->
     <section class="section section--dark" id="experiencia">
       <div class="container">
-        <header class="section__head section__head--light">
+        <header class="section__head section__head--light reveal">
           <span class="kicker kicker--red">A casa é sua</span>
           <h2 class="display">Experiência Corteza</h2>
         </header>
 
         <div class="perks">
-          <article class="perk">
+          <article class="perk reveal" style="--i:0">
             <div class="perk__icon" aria-hidden="true">
               <svg viewBox="0 0 48 48"><path d="M10 18h24v12a10 10 0 0 1-10 10h-4a10 10 0 0 1-10-10V18z" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M34 21h3a5 5 0 0 1 0 10h-3" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M17 6c-2 3 2 5 0 8M24 6c-2 3 2 5 0 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
             </div>
             <h3>Café cortesia</h3>
             <p>Aquele cafezinho de copinho, sempre passado, por conta da casa enquanto você espera.</p>
           </article>
-          <article class="perk">
+          <article class="perk reveal" style="--i:1">
             <div class="perk__icon" aria-hidden="true">
               <svg viewBox="0 0 48 48"><rect x="12" y="4" width="24" height="40" rx="3" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M12 18h24M17 10v4M17 23v8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
             </div>
             <h3>Geladeira gelada</h3>
             <p>Nossa geladeirinha preta está sempre abastecida com Monster, Coca-Cola e outras bebidas para acompanhar o seu corte <em>(consultar valores no local)</em>.</p>
           </article>
-          <article class="perk">
+          <article class="perk reveal" style="--i:2">
             <div class="perk__icon" aria-hidden="true">
               <svg viewBox="0 0 48 48"><circle cx="24" cy="16" r="8" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M8 44c0-9 7-15 16-15s16 6 16 15" fill="none" stroke="currentColor" stroke-width="2.5"/></svg>
             </div>
             <h3>Um barbeiro, um padrão</h3>
             <p>Quem te atende é sempre o Guilherme. Ele conhece seu corte e mantém o mesmo acabamento toda vez.</p>
           </article>
-          <article class="perk">
+          <article class="perk reveal" style="--i:3">
             <div class="perk__icon" aria-hidden="true">
               <svg viewBox="0 0 48 48"><rect x="6" y="10" width="36" height="32" rx="3" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M6 19h36M16 5v9M32 5v9" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="m17 30 5 5 9-10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
             </div>
@@ -173,13 +179,13 @@
     <!-- ============ AGENDAMENTO ============ -->
     <section class="section section--paper" id="agendar">
       <div class="container container--narrow">
-        <header class="section__head">
+        <header class="section__head reveal">
           <span class="kicker">Rápido e sem cadastro</span>
           <h2 class="display">Agende seu horário</h2>
           <p class="section__sub">Ao finalizar, você é levado automaticamente para o WhatsApp com tudo preenchido.</p>
         </header>
 
-        <div class="booking" id="booking">
+        <div class="booking reveal" id="booking">
           <ol class="steps" aria-label="Etapas do agendamento">
             <li class="is-active" data-step-dot="1"><span>1</span>Serviços</li>
             <li data-step-dot="2"><span>2</span>Data e hora</li>
@@ -276,13 +282,13 @@
     <!-- ============ LOCAL ============ -->
     <section class="section" id="local">
       <div class="container">
-        <header class="section__head">
+        <header class="section__head reveal">
           <span class="kicker">Venha tomar um café</span>
           <h2 class="display">Onde estamos</h2>
         </header>
 
         <div class="location">
-          <div class="location__info">
+          <div class="location__info reveal">
             <h3 class="serif">R. Mieceslau Jasiocha, 66</h3>
             <p>Thomaz Coelho · Rio de Janeiro - RJ</p>
             <a class="btn btn--dark" id="routeBtn" target="_blank" rel="noopener"
@@ -292,7 +298,7 @@
               <tbody></tbody>
             </table>
           </div>
-          <div class="location__map">
+          <div class="location__map reveal" style="--i:1">
             <iframe title="Mapa da Corteza Barbearia" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
               src="https://www.google.com/maps?q=R.+Mieceslau+Jasiocha,+66+-+Thomaz+Coelho,+Rio+de+Janeiro&output=embed"></iframe>
           </div>
@@ -303,11 +309,11 @@
     <!-- ============ FAQ ============ -->
     <section class="section section--paper" id="faq">
       <div class="container container--narrow">
-        <header class="section__head">
+        <header class="section__head reveal">
           <span class="kicker">Dúvidas</span>
           <h2 class="display">Perguntas frequentes</h2>
         </header>
-        <div class="faq">
+        <div class="faq reveal">
           <details>
             <summary>Preciso agendar ou posso chegar direto?</summary>
             <p>Como o atendimento é feito só pelo Guilherme, o ideal é agendar. Assim você chega e já senta na cadeira.</p>
@@ -396,9 +402,137 @@
     <img src="" alt="" id="lightboxImg">
   </div>
 
+  <!-- Modal de login -->
+  <div class="modal" id="loginModal" hidden>
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__card modal__card--left" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+      <button class="modal__close" data-close aria-label="Fechar">×</button>
+      <img src="images/barbearia/logo-corteza.png" alt="" class="modal__logo" width="140" height="43">
+      <h3 class="serif" id="loginTitle">Entrar</h3>
+      <p class="muted">Acompanhe seus horários ou acesse o painel do barbeiro.</p>
+      <form id="loginForm" class="login" novalidate>
+        <label class="field field--full">
+          <span>E-mail ou usuário</span>
+          <input type="text" id="lUser" autocomplete="username" placeholder="cliente1@corteza.com" required>
+        </label>
+        <label class="field field--full">
+          <span>Senha</span>
+          <input type="password" id="lPass" autocomplete="current-password" placeholder="••••••••" required>
+        </label>
+        <p class="form-error" id="loginError" hidden>E-mail/usuário ou senha incorretos.</p>
+        <button class="btn btn--red btn--block" type="submit">Entrar</button>
+      </form>
+      <div class="demo-accounts">
+        <span>Contas de demonstração</span>
+        <div>
+          <button type="button" class="demo-acc" data-demo="cliente1"><b>Cliente</b><small>cliente1 / cliente1</small></button>
+          <button type="button" class="demo-acc" data-demo="barbeiro1"><b>Barbeiro</b><small>barbeiro1 / barbeiro1</small></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Área do cliente -->
+  <div class="modal" id="accountModal" hidden>
+    <div class="modal__backdrop" data-close></div>
+    <div class="modal__card modal__card--left modal__card--wide" role="dialog" aria-modal="true" aria-labelledby="accName">
+      <button class="modal__close" data-close aria-label="Fechar">×</button>
+      <span class="kicker">Minha conta</span>
+      <h3 class="serif" id="accName"></h3>
+      <p class="muted" id="accEmail"></p>
+      <h4 class="list-title">Meus agendamentos</h4>
+      <ul class="mybookings" id="myBookings"></ul>
+      <div class="modal__actions modal__actions--row">
+        <button class="btn btn--red" id="accGoBook">Agendar novo horário</button>
+        <button class="btn btn--text" id="logoutBtn">Sair</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Painel do barbeiro -->
+  <div class="panel" id="panel" hidden role="dialog" aria-modal="true" aria-labelledby="panelTitle">
+    <header class="panel__head">
+      <div class="container panel__head-inner">
+        <div>
+          <span class="kicker kicker--red">Painel do barbeiro</span>
+          <h2 id="panelTitle">Olá, <span id="panelUser"></span></h2>
+        </div>
+        <div class="panel__head-actions">
+          <button class="btn btn--ghost btn--sm" id="panelLogout">Sair</button>
+          <button class="modal__close" id="panelClose" aria-label="Fechar painel">×</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="container panel__body">
+      <div class="stats" id="panelStats"></div>
+
+      <div class="ptabs">
+        <button class="ptab is-active" data-ptab="agenda">Agenda</button>
+        <button class="ptab" data-ptab="novo">+ Novo horário</button>
+      </div>
+
+      <div data-ppane="agenda">
+        <div class="filters">
+          <button data-filter="hoje" class="is-active">Hoje</button>
+          <button data-filter="proximos">Próximos</button>
+          <button data-filter="todos">Todos</button>
+          <button data-filter="cancelados">Cancelados</button>
+        </div>
+        <div id="panelList"></div>
+      </div>
+
+      <div data-ppane="novo" hidden>
+        <form id="newForm" class="newform" novalidate>
+          <div class="seg">
+            <label><input type="radio" name="nKind" value="agendamento" checked><span>Agendar cliente</span></label>
+            <label><input type="radio" name="nKind" value="bloqueio"><span>Bloquear horário</span></label>
+          </div>
+          <div class="form">
+            <label class="field">
+              <span>Data</span>
+              <input type="date" id="nDate" required>
+            </label>
+            <label class="field">
+              <span>Horário</span>
+              <select id="nTime" required></select>
+            </label>
+            <p class="field--full hint" id="nDateHint"></p>
+            <label class="field only-client">
+              <span>Nome do cliente</span>
+              <input type="text" id="nName" placeholder="Ex.: João Silva">
+            </label>
+            <label class="field only-client">
+              <span>WhatsApp <em>(opcional)</em></span>
+              <input type="tel" id="nPhone" inputmode="tel" placeholder="(21) 90000-0000">
+            </label>
+            <div class="field field--full only-client">
+              <span>Serviços</span>
+              <div class="chips" id="nServices"></div>
+            </div>
+            <label class="field field--full only-block">
+              <span>Motivo <em>(opcional)</em></span>
+              <input type="text" id="nNote" placeholder="Ex.: almoço, compromisso…">
+            </label>
+          </div>
+          <button class="btn btn--red btn--block" id="nSubmit" type="submit">Salvar agendamento</button>
+        </form>
+      </div>
+
+      <p class="fineprint">Modo demonstração: os dados ficam salvos neste navegador.</p>
+    </div>
+  </div>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="vendor/qrcode.js" defer></script>
-  <script src="script.js" defer></script>
+  <script src="js/config.js" defer></script>
+  <script src="js/utils.js" defer></script>
+  <script src="js/db.js" defer></script>
+  <script src="js/site.js" defer></script>
+  <script src="js/booking.js" defer></script>
+  <script src="js/auth.js" defer></script>
+  <script src="js/panel.js" defer></script>
+  <script src="js/main.js" defer></script>
 </body>
 </html>
