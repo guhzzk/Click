@@ -589,14 +589,98 @@
     </header>
 
     <div class="container panel__body">
-      <div class="stats" id="panelStats"></div>
+      <div class="admin">
+        <!-- Menu do painel (SPA) -->
+        <nav class="admin-nav" aria-label="Seções do painel">
+          <span class="admin-nav__title">Gestão Corteza</span>
+          <button class="admin-nav__item is-active" data-view="geral" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span>Visão Geral</span></button>
+          <button class="admin-nav__item" data-view="agenda"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Agenda Multiprofissional</span></button>
+          <button class="admin-nav__item" data-view="clube"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg><span>Clube de Assinaturas</span></button>
+          <button class="admin-nav__item" data-view="financeiro"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Financeiro &amp; IA</span></button>
+          <button class="admin-nav__item" data-view="automacao"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="m21 3-9 9M15 3h6v6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Configurações de Automação</span></button>
+          <div class="admin-nav__foot"><i class="live-dot"></i><span>Sincronizado · agora</span></div>
+        </nav>
 
-      <div class="ptabs">
-        <button class="ptab is-active" data-ptab="agenda">Agenda</button>
-        <button class="ptab" data-ptab="novo">+ Novo horário</button>
-        <button class="ptab" data-ptab="renda">Renda</button>
-        <button class="ptab" data-ptab="ia">🤖 Assistente IA</button>
-      </div>
+        <div class="admin-main">
+          <!-- ================= VISÃO GERAL ================= -->
+          <section class="admin-view is-active" data-view-pane="geral" aria-label="Visão geral">
+            <div class="autopilot">
+              <div class="autopilot__txt">
+                <span class="pill-preview">Prévia do upgrade</span>
+                <h3>Sua Barbearia no Piloto Automático 🚀</h3>
+                <p>Enquanto o Guilherme corta, o sistema confirma horários, responde o WhatsApp, recupera desistências e organiza o caixa sozinho.</p>
+              </div>
+              <div class="autopilot__status">
+                <span class="neon-badge"><i></i><span id="autopilotCount">5 automações ativas</span></span>
+                <small>Última ação automática há 2 min</small>
+              </div>
+            </div>
+
+            <div class="kpis">
+              <article class="kpi" style="--i:0">
+                <span class="kpi__icon" aria-hidden="true">✅</span>
+                <b id="kpiConfirmed">0</b>
+                <span class="kpi__label">Agendamentos Confirmados Pelo Sistema</span>
+                <small>esta semana · +18% vs. a anterior</small>
+              </article>
+              <article class="kpi" style="--i:1">
+                <span class="kpi__icon" aria-hidden="true">💬</span>
+                <b id="kpiMessages">0</b>
+                <span class="kpi__label">Mensagens de WhatsApp Economizadas</span>
+                <small>respondidas pelo robô · ≈ 6h do Guilherme</small>
+              </article>
+              <article class="kpi" style="--i:2">
+                <span class="kpi__icon" aria-hidden="true">⏳</span>
+                <b id="kpiRecovered">0</b>
+                <span class="kpi__label">Evitados via Fila de Espera</span>
+                <small>clientes recuperados de desistências</small>
+              </article>
+              <article class="kpi kpi--neon" style="--i:3">
+                <span class="kpi__icon" aria-hidden="true">⚡</span>
+                <b id="kpiPix">0</b>
+                <span class="kpi__label">Caixa Organizado Automatizado</span>
+                <small>Pix conciliados via Webhook · <span id="kpiPixValue"></span></small>
+              </article>
+            </div>
+
+            <h4 class="admin-subtitle">Hoje na cadeira</h4>
+            <div class="stats" id="panelStats"></div>
+
+            <div class="geral-grid">
+              <div class="card-box">
+                <h4 class="card-title">Antes × Depois da automação</h4>
+                <div class="vs-legend"><span class="vs-legend__before">Antes</span><span class="vs-legend__after">Com Corteza</span></div>
+                <div id="ovContrast"></div>
+              </div>
+              <div class="card-box">
+                <h4 class="card-title">Próximos horários <button class="btn btn--text btn--sm" data-view-go="agenda">Ver agenda →</button></h4>
+                <ul class="ov-upcoming" id="ovUpcoming"></ul>
+              </div>
+            </div>
+          </section>
+
+          <!-- ================= AGENDA MULTIPROFISSIONAL ================= -->
+          <section class="admin-view" data-view-pane="agenda" aria-label="Agenda multiprofissional">
+            <div class="view-head">
+              <h3 class="serif">Agenda Multiprofissional</h3>
+              <p class="muted">Cada profissional com a própria agenda, link de agendamento e comissão.</p>
+            </div>
+            <div class="pros">
+              <article class="pro" id="proMain"></article>
+              <article class="pro pro--add">
+                <span class="pro__avatar pro__avatar--add">+</span>
+                <div class="pro__info">
+                  <b>Cadeira 2</b>
+                  <small>Adicione um barbeiro: agenda, comissão e link próprios.</small>
+                </div>
+                <button class="btn btn--sm btn--gold" data-admin-toast="Convite para profissional disponível no plano Multiprofissional ✂️">Convidar</button>
+              </article>
+            </div>
+
+            <div class="ptabs">
+              <button class="ptab is-active" data-ptab="agenda">Agenda</button>
+              <button class="ptab" data-ptab="novo">+ Novo horário</button>
+            </div>
 
       <div data-ppane="agenda">
         <div class="filters">
@@ -607,62 +691,6 @@
         </div>
         <div class="panel-waitlist" id="panelWaitlist" hidden></div>
         <div id="panelList"></div>
-      </div>
-
-      <div data-ppane="ia" hidden>
-        <div class="ai">
-          <div class="ai-head">
-            <div>
-              <span class="pill-preview">Prévia do upgrade</span>
-              <h3 class="serif">🤖 Assistente de IA &amp; WhatsApp</h3>
-              <p class="muted">Responde clientes, oferece encaixes e agenda sozinho, 24 horas por dia.</p>
-            </div>
-            <button class="ai-switch is-on" id="aiSwitch" type="button" role="switch" aria-checked="true">
-              <span class="ai-switch__track" aria-hidden="true"><span class="ai-switch__thumb"></span></span>
-              <span class="ai-switch__label">Status do Chatbot: <b id="aiStatusText">Ativo</b></span>
-            </button>
-          </div>
-
-          <div class="ai-grid">
-            <div class="ai-phone">
-              <div class="ai-phone__bar">
-                <span class="ai-avatar" aria-hidden="true">R</span>
-                <div><b>Rafael</b><small id="aiPeerStatus">online</small></div>
-                <span class="ai-badge">IA respondendo</span>
-              </div>
-              <div class="ai-chat" id="aiChat" aria-live="polite"></div>
-              <div class="ai-paused-note">⏸️ Assistente pausado. Novas mensagens ficam para você responder.</div>
-              <div class="ai-phone__input">
-                <span>Mensagem</span>
-                <button class="btn btn--text btn--sm" id="aiReplay" type="button" hidden>↻ Repetir demonstração</button>
-              </div>
-            </div>
-
-            <aside class="ai-side">
-              <div class="ai-stats">
-                <div class="ai-stat"><b>23</b><span>conversas hoje</span></div>
-                <div class="ai-stat"><b>7</b><span>agendados pela IA</span></div>
-                <div class="ai-stat"><b>4s</b><span>resposta média</span></div>
-              </div>
-              <h4 class="list-title">Atividade recente</h4>
-              <ul class="ai-log" id="aiLog"></ul>
-            </aside>
-          </div>
-        </div>
-      </div>
-
-      <div data-ppane="renda" hidden>
-        <div class="report-head">
-          <h3 class="serif">Relatório de renda</h3>
-          <div class="filters">
-            <button data-report="dia" class="is-active">Dia a dia</button>
-            <button data-report="semana">Semana a semana</button>
-            <button data-report="mes">Mês a mês</button>
-          </div>
-        </div>
-        <p class="demo-data" id="demoData"></p>
-        <div id="reportBody"></div>
-        <p class="fineprint">O faturamento soma o valor recebido de cada atendimento marcado como concluído, no dia em que foi concluído.</p>
       </div>
 
       <div data-ppane="novo" hidden>
@@ -716,7 +744,252 @@
         </form>
       </div>
 
-      <p class="fineprint">Modo demonstração: os dados ficam salvos neste navegador.</p>
+          </section>
+
+          <!-- ================= CLUBE DE ASSINATURAS ================= -->
+          <section class="admin-view" data-view-pane="clube" aria-label="Clube de assinaturas">
+            <div class="view-head">
+              <span class="pill-preview">Dados de demonstração</span>
+              <h3 class="serif">Diagnóstico do Clube de Assinaturas</h3>
+              <p class="muted">Club Corteza ONE e BLACK: quanto do mês já está garantido antes de abrir a porta.</p>
+            </div>
+            <div class="club-grid">
+              <div class="card-box gauge-card">
+                <h4 class="card-title">Previsibilidade de Caixa para o Mês</h4>
+                <div class="gauge" id="clubGauge" style="--p:0" role="img" aria-label="Previsibilidade de caixa">
+                  <div class="gauge__arc"></div>
+                  <div class="gauge__needle"></div>
+                  <div class="gauge__center"><b id="clubPct">0%</b><small>garantido</small></div>
+                </div>
+                <p class="gauge__money"><b id="clubMRR">R$ 0,00</b> garantidos via recorrência</p>
+                <small class="muted" id="clubGaugeNote"></small>
+                <div class="progress" id="clubProgress" style="--p:0"><span></span><i style="--at:50%" title="Meta: 50%"></i></div>
+                <div class="progress__legend"><span>0%</span><span>Meta 50%</span><span>100%</span></div>
+              </div>
+              <div class="card-box">
+                <h4 class="card-title">Assinantes por plano <small id="clubTotals"></small></h4>
+                <div id="clubPlans"></div>
+              </div>
+            </div>
+            <div class="insights" id="clubInsights"></div>
+            <div class="card-box">
+              <h4 class="card-title">Próximas renovações automáticas</h4>
+              <ul class="renewals" id="clubRenewals"></ul>
+            </div>
+          </section>
+
+          <!-- ================= FINANCEIRO & IA ================= -->
+          <section class="admin-view" data-view-pane="financeiro" aria-label="Financeiro e IA">
+            <div class="view-head">
+              <h3 class="serif">Financeiro &amp; Saúde Inteligente</h3>
+              <p class="muted">Edite seus custos e veja o resultado do mês na hora.</p>
+            </div>
+
+            <div class="card-box health">
+              <div class="health__head">
+                <div>
+                  <span class="pill-preview">Calculadora</span>
+                  <h4 class="card-title">Calculadora de Saúde Financeira da Barbearia</h4>
+                </div>
+                <div class="score" id="finScore" style="--s:0" data-level="good">
+                  <div class="score__ring"></div>
+                  <div class="score__txt"><b id="finScoreNum">0</b><small id="finScoreLabel">Saudável</small></div>
+                </div>
+              </div>
+              <div class="health__metrics">
+                <div class="metric metric--gold"><span>Faturamento Estimado</span><b id="finFat">R$ 0,00</b><small id="finFatSub"></small></div>
+                <div class="metric metric--neon"><span>Lucro Líquido Realizado</span><b id="finProfit">R$ 0,00</b><small id="finProfitSub"></small></div>
+                <div class="metric"><span>Custo por Cadeira</span><b id="finChair">R$ 0,00</b><small id="finChairSub"></small></div>
+              </div>
+              <div class="health__mini">
+                <div><span>Margem líquida</span><b id="finMargin">0%</b></div>
+                <div><span>Custos do mês</span><b id="finCostsTotal">R$ 0,00</b></div>
+                <div><span>Contas pagas em</span><b id="finBreakEven">—</b><small id="finBreakEvenSub"></small></div>
+              </div>
+              <details class="health__editor" id="finEditor">
+                <summary>Editar custos e volume do mês</summary>
+                <div class="cost-grid" id="finCosts"></div>
+                <div class="cost-grid" id="finVolume"></div>
+                <button class="btn btn--text btn--sm" id="finReset" type="button">Restaurar valores de exemplo</button>
+              </details>
+            </div>
+
+            <div class="card-box pricing">
+              <h4 class="card-title">⚡ Precificação Inteligente</h4>
+              <p class="muted">Mude o preço e veja o impacto projetado no faturamento mensal.</p>
+              <div class="pricing__grid">
+                <div class="pricing__controls">
+                  <label class="field field--full"><span>Serviço</span><select id="priceService"></select></label>
+                  <div class="field field--full">
+                    <span>Novo preço: <b id="priceNew">R$ 0,00</b> <em id="priceNewPct"></em></span>
+                    <input type="range" id="priceSlider" class="range-gold" step="1" aria-label="Novo preço">
+                    <small class="muted">Preço atual: <b id="priceNow"></b></small>
+                  </div>
+                  <div class="field field--full">
+                    <span>Sensibilidade dos clientes ao preço</span>
+                    <div class="filters filters--tight">
+                      <button type="button" data-sens="baixa">Baixa</button>
+                      <button type="button" data-sens="media" class="is-active">Média</button>
+                      <button type="button" data-sens="alta">Alta</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="pricing__result">
+                  <span class="price-impact" id="priceImpact">+R$ 0,00/mês</span>
+                  <small id="priceImpactPct"></small>
+                  <small class="muted" id="priceClients"></small>
+                  <div class="cmp">
+                    <div class="cmp__row"><span>Hoje</span><div class="cmp__bar"><i id="priceBar0"></i></div><b id="priceRev0"></b></div>
+                    <div class="cmp__row cmp__row--new"><span>Projetado</span><div class="cmp__bar"><i id="priceBar1"></i></div><b id="priceRev1"></b></div>
+                  </div>
+                  <p class="price-tip" id="priceTip"></p>
+                  <button class="btn btn--gold btn--sm" id="priceApply" type="button" hidden>Aplicar sugestão</button>
+                </div>
+              </div>
+            </div>
+
+      <div class="admin-block card-box">
+        <div class="report-head">
+          <h3 class="serif">Relatório de renda</h3>
+          <div class="filters">
+            <button data-report="dia" class="is-active">Dia a dia</button>
+            <button data-report="semana">Semana a semana</button>
+            <button data-report="mes">Mês a mês</button>
+          </div>
+        </div>
+        <p class="demo-data" id="demoData"></p>
+        <div id="reportBody"></div>
+        <p class="fineprint">O faturamento soma o valor recebido de cada atendimento marcado como concluído, no dia em que foi concluído.</p>
+      </div>
+
+          </section>
+
+          <!-- ================= AUTOMAÇÃO & WHATSAPP ================= -->
+          <section class="admin-view" data-view-pane="automacao" aria-label="Configurações de automação">
+            <div class="card-box meta-head">
+              <div>
+                <span class="neon-badge neon-badge--strong"><i></i>Conexão Ativa com Meta API</span>
+                <h3 class="serif">Automação &amp; WhatsApp</h3>
+                <p class="muted">Integração com a API oficial do WhatsApp Business · Corteza Barbearia · (41) ••••• •••• <span class="pill-preview">Prévia do upgrade</span></p>
+              </div>
+              <div class="meta-stats">
+                <div><b>Alta</b><small>qualidade do número</small></div>
+                <div><b>64</b><small>mensagens hoje</small></div>
+                <div><b>99,2%</b><small>taxa de entrega</small></div>
+              </div>
+            </div>
+
+            <div class="card-box">
+              <h4 class="card-title">Automações <small id="autoCount"></small></h4>
+              <div class="auto-list">
+              <button class="auto-row is-on" type="button" role="switch" aria-checked="true" data-auto="noshow">
+                <span class="auto-row__txt"><b>Lembrete anti-falta (no-show)</b><small>WhatsApp automático 2h antes de cada horário</small></span>
+                <span class="ai-switch__track" aria-hidden="true"><span class="ai-switch__thumb"></span></span>
+              </button>
+              <button class="auto-row is-on" type="button" role="switch" aria-checked="true" data-auto="confirm">
+                <span class="auto-row__txt"><b>Confirmação de agendamento</b><small>Mensagem com data, hora e endereço assim que o cliente agenda</small></span>
+                <span class="ai-switch__track" aria-hidden="true"><span class="ai-switch__thumb"></span></span>
+              </button>
+              <button class="auto-row is-on" type="button" role="switch" aria-checked="true" data-auto="fila">
+                <span class="auto-row__txt"><b>Aviso da fila de espera</b><small>Oferece a vaga para a fila quando alguém cancela</small></span>
+                <span class="ai-switch__track" aria-hidden="true"><span class="ai-switch__thumb"></span></span>
+              </button>
+              <button class="auto-row" type="button" role="switch" aria-checked="false" data-auto="review">
+                <span class="auto-row__txt"><b>Pós-atendimento</b><small>Pede avaliação 3h depois do corte</small></span>
+                <span class="ai-switch__track" aria-hidden="true"><span class="ai-switch__thumb"></span></span>
+              </button>
+              <button class="auto-row is-on" type="button" role="switch" aria-checked="true" data-auto="birthday">
+                <span class="auto-row__txt"><b>Parabéns de aniversário</b><small>Mensagem com cupom no dia do aniversário</small></span>
+                <span class="ai-switch__track" aria-hidden="true"><span class="ai-switch__thumb"></span></span>
+              </button>
+              </div>
+            </div>
+
+            <div class="flows">
+              <article class="card-box flow-card">
+                <header class="flow-card__head">
+                  <span class="flow-step">1</span>
+                  <div><h4>Lembrete de No-Show</h4><small id="noShowWhen">Disparado automaticamente 2h antes</small></div>
+                </header>
+                <div class="wa-thread">
+                  <div class="wa-bubble wa-bubble--out" id="noShowMsg"></div>
+                  <div class="wa-bubble wa-bubble--in" id="noShowReply">1 ✅ Confirmado, até mais tarde!</div>
+                </div>
+                <ol class="msg-status" id="noShowStatus">
+                  <li><i></i><span>Agendado</span><small></small></li>
+                  <li><i></i><span>Enviado ✓</span><small>—</small></li>
+                  <li><i></i><span>Entregue ✓✓</span><small>—</small></li>
+                  <li><i></i><span>Confirmado 👍</span><small>—</small></li>
+                </ol>
+                <button class="btn btn--dark btn--block" id="noShowSim" type="button">▶ Simular disparo</button>
+              </article>
+
+              <article class="card-box flow-card">
+                <header class="flow-card__head">
+                  <span class="flow-step">2</span>
+                  <div><h4>Fluxo de Autoatendimento</h4><small>O robô responde sem o Guilherme tocar no celular</small></div>
+                </header>
+                <div class="flow-tree" id="flowTree" data-active="0">
+                  <div class="flow-node flow-node--client">💬 Cliente: “Oi, tudo bem?”</div>
+                  <div class="flow-node flow-node--bot">🤖 Olá! Sou o assistente da Corteza. Digite:<br><b>1</b> Agendar · <b>2</b> Endereço · <b>3</b> Planos</div>
+                  <div class="flow-branches">
+                    <button class="flow-branch" type="button" data-branch="1"><b>1</b> Agendar</button>
+                    <button class="flow-branch" type="button" data-branch="2"><b>2</b> Endereço</button>
+                    <button class="flow-branch" type="button" data-branch="3"><b>3</b> Planos</button>
+                  </div>
+                  <div class="flow-node flow-node--reply" id="flowReply"></div>
+                </div>
+                <p class="flow-foot"><span class="neon-badge"><i></i>Respondido sozinho: <b id="flowTouches">0</b></span> <span>Toques do Guilherme no celular: <b>0</b></span></p>
+              </article>
+            </div>
+
+      <div class="admin-block">
+        <div class="ai">
+          <div class="ai-head">
+            <div>
+              <span class="pill-preview">Prévia do upgrade</span>
+              <h3 class="serif">🤖 Assistente de IA &amp; WhatsApp</h3>
+              <p class="muted">Responde clientes, oferece encaixes e agenda sozinho, 24 horas por dia.</p>
+            </div>
+            <button class="ai-switch is-on" id="aiSwitch" type="button" role="switch" aria-checked="true">
+              <span class="ai-switch__track" aria-hidden="true"><span class="ai-switch__thumb"></span></span>
+              <span class="ai-switch__label">Status do Chatbot: <b id="aiStatusText">Ativo</b></span>
+            </button>
+          </div>
+
+          <div class="ai-grid">
+            <div class="ai-phone">
+              <div class="ai-phone__bar">
+                <span class="ai-avatar" aria-hidden="true">R</span>
+                <div><b>Rafael</b><small id="aiPeerStatus">online</small></div>
+                <span class="ai-badge">IA respondendo</span>
+              </div>
+              <div class="ai-chat" id="aiChat" aria-live="polite"></div>
+              <div class="ai-paused-note">⏸️ Assistente pausado. Novas mensagens ficam para você responder.</div>
+              <div class="ai-phone__input">
+                <span>Mensagem</span>
+                <button class="btn btn--text btn--sm" id="aiReplay" type="button" hidden>↻ Repetir demonstração</button>
+              </div>
+            </div>
+
+            <aside class="ai-side">
+              <div class="ai-stats">
+                <div class="ai-stat"><b>23</b><span>conversas hoje</span></div>
+                <div class="ai-stat"><b>7</b><span>agendados pela IA</span></div>
+                <div class="ai-stat"><b>4s</b><span>resposta média</span></div>
+              </div>
+              <h4 class="list-title">Atividade recente</h4>
+              <ul class="ai-log" id="aiLog"></ul>
+            </aside>
+          </div>
+        </div>
+      </div>
+
+          </section>
+
+          <p class="fineprint">Modo demonstração: agenda e renda usam os dados salvos neste navegador; clube, automações e custos usam dados de exemplo.</p>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -764,6 +1037,7 @@
   <script src="js/location.js" defer></script>
   <script src="js/neon.js" defer></script>
   <script src="js/premium.js" defer></script>
+  <script src="js/admin.js" defer></script>
   <script src="js/main.js" defer></script>
 </body>
 </html>

@@ -39,6 +39,19 @@ Com `demoMode: true` em `js/config.js`, o site mostra recursos simulados para ap
 Nada disso tem integração real: antes de abrir o site para clientes, coloque `demoMode: false`.
 Sem o modo demonstração, a fila de espera continua funcionando de verdade (aparece só em dias realmente lotados e envia o pedido pelo WhatsApp da barbearia).
 
+## Área administrativa (painel do barbeiro)
+Entre como `barbeiro1`. O painel abre com menu lateral (no celular, menu deslizante no topo) e cinco telas:
+
+| Tela | O que tem | Dados |
+|---|---|---|
+| Visão Geral | "Sua Barbearia no Piloto Automático 🚀", contadores, hoje na cadeira, antes × depois, próximos horários | contadores de exemplo; hoje e próximos horários reais |
+| Agenda Multiprofissional | Guilherme (Cadeira 1) + vaga para Cadeira 2, agenda, novo horário, bloqueios, encaixe inteligente | reais |
+| Clube de Assinaturas | velocímetro de previsibilidade de caixa, assinantes por plano (ONE/BLACK), alertas e renovações | exemplo (preço do BLACK estimado) |
+| Financeiro & IA | calculadora de saúde financeira (custos editáveis), precificação inteligente e relatório de renda | custos de exemplo editáveis; relatório real |
+| Configurações de Automação | badge de conexão com a API do WhatsApp, automações liga/desliga, lembrete de no-show, árvore do robô e assistente de IA | simulação |
+
+Os dados de exemplo ficam em `ADMIN_DEMO`, no início de `js/admin.js`.
+
 ## Antes de publicar
 Edite `js/config.js`:
 
@@ -65,6 +78,7 @@ js/booking.js     agendamento e Pix
 js/auth.js        login e área do cliente
 js/panel.js       painel do barbeiro
 js/premium.js     recursos premium (Pix automático, fila, IA, encaixe)
+js/admin.js       área administrativa (telas, financeiro, clube, automação)
 js/main.js        inicialização
 vendor/qrcode.js  gerador de QR Code (MIT)
 ```

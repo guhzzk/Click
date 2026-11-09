@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initAccount();
   initPanel();
   initPremium();
+  initAdmin();
 
   renderAccountBtn();
   renderNextBooking();
