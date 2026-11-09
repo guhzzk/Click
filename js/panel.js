@@ -8,8 +8,8 @@ function openPanel() {
   const u = Auth.user();
   if (!u || u.role !== 'barbeiro') return;
   $('#panelUser').textContent = u.name;
-  showPanelTab('agenda');
   openModal($('#panel'));
+  showView('geral'); // área administrativa (js/admin.js)
 }
 
 function showPanelTab(tab) {
@@ -20,18 +20,16 @@ function showPanelTab(tab) {
     p.hidden = !show;
     if (show) { p.classList.remove('pane-in'); void p.offsetWidth; p.classList.add('pane-in'); }
   });
-  renderPanelStats();
   if (tab === 'agenda') renderPanel();
   if (tab === 'novo') { prepareNewForm(); SmartFit.render(); }
-  if (tab === 'renda') renderReport();
-  if (tab === 'ia') AI.start(); else AI.stop();
 }
 
 /** Redesenha o que estiver visível depois de uma mudança nos dados */
 function refreshPanel() {
   renderPanelStats();
-  if (panel.tab === 'agenda') renderPanel();
-  if (panel.tab === 'renda') renderReport();
+  if (admin.view === 'geral') Overview.render();
+  if (admin.view === 'agenda') { Pros.render(); if (panel.tab === 'agenda') renderPanel(); }
+  if (admin.view === 'financeiro') renderReport();
   renderNextBooking();
   if (bookingStep() === 2) { renderDays(); renderSlots(); }
 }
@@ -476,12 +474,15 @@ function initPanel() {
   renderNewServices();
   maskPhone($('#nPhone'));
 
-  $('#panelClose').addEventListener('click', () => { AI.stop(); closeModal(el); });
+  $('#panelClose').addEventListener('click', () => { AI.stop(); Automation.stop(); closeModal(el); });
   $('#panelLogout').addEventListener('click', logout);
 
   el.addEventListener('click', (e) => {
     const tab = e.target.closest('[data-ptab], [data-ptab-go]');
-    if (tab) showPanelTab(tab.dataset.ptab || tab.dataset.ptabGo);
+    if (tab) {
+      if (admin.view !== 'agenda') showView('agenda');
+      showPanelTab(tab.dataset.ptab || tab.dataset.ptabGo);
+    }
 
     const f = e.target.closest('[data-filter]');
     if (f) { panel.filter = f.dataset.filter; renderPanel(); }

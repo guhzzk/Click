@@ -258,7 +258,7 @@ const AI = (() => {
 
   const active = () => store(KEY) !== false;
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-  const alive = (id) => id === run && !$('#panel').hidden && !$('[data-ppane="ia"]').hidden && active();
+  const alive = (id) => id === run && !$('#panel').hidden && admin.view === 'automacao' && active();
 
   function renderSwitch() {
     const on = active();
