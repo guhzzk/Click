@@ -33,7 +33,6 @@ Com `demoMode: true` em `js/config.js`, o site mostra recursos simulados para ap
 
 - **Pix com confirmação automática:** depois de copiar o código, aparece "Aguardando pagamento…" e, em 5 s, "Pagamento Confirmado com Sucesso! 🎉" (webhook simulado). Só roda sem chave Pix real.
 - **Fila de espera:** o próximo sábado aparece lotado e o cliente pode entrar na fila (manhã/tarde). O barbeiro vê a fila na aba Agenda do painel.
-- **Encaixe Inteligente:** botão em "+ Novo horário" que mostra brechas de 15 min sugeridas.
 
 Nada disso tem integração real: antes de abrir o site para clientes, coloque `demoMode: false`.
 Sem o modo demonstração, a fila de espera continua funcionando de verdade (aparece só em dias realmente lotados e envia o pedido pelo WhatsApp da barbearia).
@@ -80,7 +79,7 @@ js/site.js        seções, carrinho e animações
 js/booking.js     agendamento e Pix
 js/auth.js        login e área do cliente
 js/panel.js       painel do barbeiro
-js/premium.js     recursos premium (Pix automático, fila, IA, encaixe)
+js/premium.js     recursos premium (Pix automático e fila de espera)
 js/admin.js       painel: navegação, visão geral, catálogo e estoque
 js/finance.js     financeiro: lançamentos, contas fixas, resumo e planilha
 js/messages.js    mensagens do WhatsApp editáveis

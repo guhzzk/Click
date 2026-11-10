@@ -1259,14 +1259,14 @@ body.has-cart .theme-toggle { bottom: 86px; }
 .ptabs::-webkit-scrollbar { display: none; }
 .ptab { white-space: nowrap; flex: none; }
 
-/* Switch grande (também usado no Encaixe Inteligente) */
+/* Switch grande (também usado nas mensagens) */
 .ai-switch {
   display: inline-flex; align-items: center; gap: 12px; padding: 10px 16px 10px 10px; border-radius: 999px;
   background: var(--card); border: 1.5px solid var(--line); font-weight: 700; font-size: .9rem;
   transition: border-color .4s ease, box-shadow .4s ease;
 }
 .ai-switch.is-on { border-color: rgba(31, 175, 84, .6); box-shadow: 0 0 0 4px rgba(31, 175, 84, .12), 0 10px 24px rgba(31, 175, 84, .18); }
-.ai-switch:focus-visible, .smartfit__btn:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
+.ai-switch:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
 .ai-switch b { color: var(--muted); transition: color .3s; }
 .ai-switch.is-on b { color: #157a3b; }
 :is(:root[data-theme="dark"], .panel, .modal--admin) .ai-switch.is-on b { color: #7BD89A; }
@@ -1281,41 +1281,9 @@ body.has-cart .theme-toggle { bottom: 86px; }
 .is-on > .ai-switch__track { background: var(--whats); }
 .is-on > .ai-switch__track .ai-switch__thumb { transform: translateX(22px); }
 
-/* ---------- 4) Encaixe Inteligente ---------- */
-.smartfit {
-  border-radius: 14px; padding: 14px 16px; border: 1.5px dashed var(--line); background: var(--paper);
-  transition: border-color .4s ease, background-color .4s ease, box-shadow .4s ease;
-}
-.smartfit.is-on {
-  border-style: solid; border-color: rgba(245, 165, 36, .7);
-  background: linear-gradient(135deg, rgba(245, 165, 36, .14), transparent 70%), var(--paper);
-  box-shadow: 0 10px 24px rgba(245, 165, 36, .14);
-}
-.smartfit__btn { width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; }
-.smartfit__icon {
-  flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; font-size: 1.2rem;
-  background: var(--soft); transition: background-color .4s ease, transform .5s cubic-bezier(.3, 1.4, .5, 1);
-}
-.smartfit.is-on .smartfit__icon { background: #F5A524; transform: rotate(-12deg) scale(1.08); }
-.smartfit__txt { flex: 1; display: flex; flex-direction: column; }
-.smartfit__txt b { font-size: 1rem; }
-.smartfit__txt small { font-size: .78rem; color: var(--muted); }
-.smartfit.is-on .smartfit__txt small { color: #B07400; font-weight: 700; }
-:is(:root[data-theme="dark"], .panel, .modal--admin) .smartfit.is-on .smartfit__txt small { color: #F5C66B; }
-.smartfit__btn.is-on .ai-switch__track { background: #F5A524; }
-.smartfit__btn.is-on .ai-switch__thumb { transform: translateX(22px); }
-.smartfit__desc { font-size: .84rem; color: var(--muted); margin: 8px 0 0 52px; }
-.smartfit__gaps { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 0 52px; }
-.smartfit__gaps:not(:empty) { margin-top: 10px; }
-.smartfit__gaps > span { font-size: .78rem; font-weight: 700; color: var(--muted); margin-right: 4px; text-transform: none; }
-.gap-chip {
-  font-size: .82rem; padding: 5px 10px; border-radius: 999px; background: #F5A524; color: #2a1a00;
-  animation: rise .45s ease both; animation-delay: calc(var(--i, 0) * 90ms);
-}
-.gap-chip small { font-weight: 600; opacity: .7; }
 
 @media (max-width: 600px) {
-  .smartfit__desc, .smartfit__gaps { margin-left: 0; }
+  
   .ai-switch { width: 100%; }
   .waitlist__cta { padding: 14px; }
 }
@@ -1816,7 +1784,6 @@ body.has-cart .theme-toggle { bottom: 86px; }
 }
 @keyframes sheetUp { from { transform: translateY(100%); } }
 @keyframes sheetDown { to { transform: translateY(100%); } }
-
 
 /* ==========================================================
    REVISÃO GERAL — serviços compactos no celular e backup

@@ -21,7 +21,7 @@ function showPanelTab(tab) {
     if (show) { p.classList.remove('pane-in'); void p.offsetWidth; p.classList.add('pane-in'); }
   });
   if (tab === 'agenda') renderPanel();
-  if (tab === 'novo') { prepareNewForm(); SmartFit.render(); }
+  if (tab === 'novo') prepareNewForm();
 }
 
 /** Redesenha o que estiver visível depois de uma mudança nos dados */
