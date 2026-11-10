@@ -53,6 +53,8 @@ function initLogin() {
   const err = $('#loginError');
 
   $$('[data-close]', modal).forEach((b) => b.addEventListener('click', () => closeModal(modal)));
+  // As contas de teste só aparecem no modo demonstração
+  $('.demo-accounts', modal).hidden = !CONFIG.demoMode;
 
   // Preenche as contas de demonstração
   $$('[data-demo]', modal).forEach((b) => b.addEventListener('click', () => {

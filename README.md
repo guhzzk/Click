@@ -43,12 +43,14 @@ Entre como `barbeiro1`. Menu com cinco telas (troca instantânea):
 
 | Tela | O que faz |
 |---|---|
-| Visão Geral | Hoje, a receber, faturado hoje e faturado no mês; alertas de estoque baixo e contas a pagar; próximos horários; relatório de renda (dia, semana, mês) |
+| Visão Geral | Hoje, a receber, faturado hoje e faturado no mês; alertas de estoque baixo e contas a pagar; próximos horários; relatório de renda (dia, semana, mês); backup dos dados |
 | Agenda | Filtros Hoje, Amanhã, Esta Semana e Ver Todos; cada horário com dia, hora, cliente, serviço e valor; "Marcar como Concluído" soma no faturamento e dá baixa nos produtos do atendimento; "+ Novo horário" e bloqueio por intervalo |
 | Catálogo de Serviços | Cadastrar, editar e excluir serviços (nome, preço, duração, incluso no plano). Os serviços aparecem no "+ Novo horário" |
 | Controle de Estoque | Cadastrar produtos (nome, custo, venda, quantidade), ajustar quantidade, margem e alerta de "Estoque Baixo" (3 unidades ou menos); a compra pode ser lançada como despesa no Financeiro |
-| Financeiro | Receitas (atendimentos concluídos entram sozinhos) e despesas por mês; contas fixas que repetem todo mês; marcar pago/recebido; gastos por categoria; resultado do mês; exportar planilha CSV para o contador |
-| Automação | Mensagens do WhatsApp escritas por você, com campos automáticos ({nome}, {data}, {hora}, {servico}, {valor}, {periodo}, {barbeiro}, {endereco}); cada mensagem ativada vira um botão na agenda que abre o WhatsApp do cliente com o texto pronto |
+| Financeiro | Extrato do mês estilo banco: saldo, contas a pagar (pagar com um toque), lançamentos por dia, para onde foi o dinheiro e contas fixas. Lançar em 3 toques (Saída/Entrada → valor → categoria). Atendimentos concluídos entram sozinhos. Planilha CSV para o contador |
+| Automação | Mensagens do WhatsApp criadas por você: criar, editar, ligar/desligar e excluir, escolhendo onde cada uma aparece (horário marcado, concluído, cancelado, fila de espera ou só guardada). Campos automáticos: {nome}, {data}, {hora}, {servico}, {valor}, {periodo}, {barbeiro}, {endereco}. Na agenda, o botão "WhatsApp ▾" lista as mensagens ativas |
+
+**Backup:** os dados do painel ficam só no navegador do aparelho. Use "Baixar backup" na Visão Geral (o painel avisa quando passa uma semana sem backup) e "Restaurar backup" para voltar os dados num aparelho novo.
 
 No modo demonstração, a primeira abertura do painel preenche a semana com horários de exemplo (botão "Remover exemplos" na agenda) e o estoque com a linha El Guapo.
 Os preços mostrados aos clientes no site continuam vindo de `js/config.js`; o catálogo vale para o painel deste navegador.

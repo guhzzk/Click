@@ -1,45 +1,34 @@
 /* ==========================================================
-   Mensagens do WhatsApp escritas pelo barbeiro
-   - Cada automação tem um texto editável com campos automáticos
-     ({nome}, {data}, {hora}, {servico}...)
-   - O interruptor liga/desliga o botão de envio na agenda
-   - O envio abre o WhatsApp do cliente com o texto pronto
-     (envio 100% automático exige a API oficial do WhatsApp)
+   Mensagens do WhatsApp (criadas pelo barbeiro)
+   - Lista livre: criar, editar, ligar/desligar e excluir
+   - Cada mensagem diz ONDE aparece (horário marcado, concluído,
+     cancelado, fila de espera ou só guardada)
+   - Na agenda, o botão "WhatsApp ▾" lista as mensagens ativas
+     daquele tipo e abre o WhatsApp do cliente com o texto pronto
    ========================================================== */
 
 const Messages = (() => {
-  const TPL_KEY = 'corteza_mensagens_v1';
-  const ON_KEY = 'corteza_automacoes';
+  const KEY = 'corteza_mensagens_v2';
 
-  /** Cada mensagem: onde é usada e o texto padrão */
-  const LIST = [
-    {
-      key: 'confirm', title: 'Confirmação de agendamento', where: 'Botão "Confirmar" em cada horário da agenda', on: true,
-      text: 'Olá, {nome}! Seu horário na Corteza está confirmado: {data} às {hora} ({servico}). Endereço: {endereco}. Até lá! 💈',
-    },
-    {
-      key: 'noshow', title: 'Lembrete anti-falta', where: 'Botão "Lembrete" em cada horário da agenda', on: true,
-      text: 'Fala, {nome}! Passando pra lembrar do seu horário {data} às {hora} com o {barbeiro}. Responde 1 pra confirmar ou 2 pra remarcar. ✂️',
-    },
-    {
-      key: 'cancel', title: 'Aviso de cancelamento', where: 'Botão "Avisar cliente" em horários cancelados', on: true,
-      text: 'Olá, {nome}. Precisei cancelar seu horário de {data} às {hora}. Me chama aqui que a gente remarca rapidinho! 🙏',
-    },
-    {
-      key: 'review', title: 'Pós-atendimento', where: 'Botão "Pedir avaliação" em atendimentos concluídos', on: false,
-      text: 'Valeu pela visita, {nome}! Se curtiu o resultado, deixa sua avaliação pra gente? Faz muita diferença. 🙌',
-    },
-    {
-      key: 'fila', title: 'Aviso da fila de espera', where: 'Botão "Avisar vaga" na fila de espera da agenda', on: true,
-      text: 'Olá, {nome}! Abriu uma vaga na Corteza em {data} ({periodo}). Quer que eu reserve pra você? 💈',
-    },
-    {
-      key: 'birthday', title: 'Aniversário', where: 'Fica guardada para quando o cadastro do cliente tiver a data de aniversário', on: true,
-      text: 'Feliz aniversário, {nome}! 🎉 A Corteza te deseja um dia daqueles. Passa aqui pra ficar na régua!',
-    },
+  /** Onde a mensagem pode aparecer */
+  const PLACES = {
+    agendado: { label: 'Horário marcado', hint: 'aparece nos horários marcados da agenda' },
+    concluido: { label: 'Atendimento concluído', hint: 'aparece nos atendimentos concluídos' },
+    cancelado: { label: 'Horário cancelado', hint: 'aparece nos horários cancelados' },
+    fila: { label: 'Fila de espera', hint: 'aparece na fila de espera' },
+    guardada: { label: 'Só guardar', hint: 'fica guardada, sem botão na agenda' },
+  };
+
+  /** Mensagens iniciais (podem ser editadas ou excluídas) */
+  const DEFAULTS = [
+    { id: 'confirm', title: 'Confirmação', place: 'agendado', on: true, text: 'Olá, {nome}! Seu horário na Corteza está confirmado: {data} às {hora} ({servico}). Endereço: {endereco}. Até lá! 💈' },
+    { id: 'noshow', title: 'Lembrete', place: 'agendado', on: true, text: 'Fala, {nome}! Passando pra lembrar do seu horário {data} às {hora} com o {barbeiro}. Responde 1 pra confirmar ou 2 pra remarcar. ✂️' },
+    { id: 'cancel', title: 'Aviso de cancelamento', place: 'cancelado', on: true, text: 'Olá, {nome}. Precisei cancelar seu horário de {data} às {hora}. Me chama aqui que a gente remarca rapidinho! 🙏' },
+    { id: 'review', title: 'Pedir avaliação', place: 'concluido', on: true, text: 'Valeu pela visita, {nome}! Se curtiu o resultado, deixa sua avaliação pra gente? Faz muita diferença. 🙌' },
+    { id: 'fila', title: 'Avisar vaga', place: 'fila', on: true, text: 'Olá, {nome}! Abriu uma vaga na Corteza em {data} ({periodo}). Quer que eu reserve pra você? 💈' },
   ];
 
-  /** Campos que o barbeiro pode inserir no texto */
+  /** Campos que viram dados do cliente */
   const VARS = [
     { key: 'nome', label: 'nome do cliente' },
     { key: 'data', label: 'data' },
@@ -50,27 +39,37 @@ const Messages = (() => {
     { key: 'barbeiro', label: 'seu nome' },
     { key: 'endereco', label: 'endereço' },
   ];
-
   const EXAMPLE = { nome: 'Rafael', data: 'quarta, 11/11', hora: '15:00', servico: 'Corte + Barba', valor: 'R$ 75,00', periodo: 'tarde' };
 
-  const saved = () => store(TPL_KEY) || {};
-  const def = (key) => LIST.find((m) => m.key === key);
-  const text = (key) => saved()[key] ?? def(key).text;
-  const isCustom = (key) => saved()[key] != null && saved()[key] !== def(key).text;
+  let editing = null; // id em edição ('' = nova)
 
-  function enabledMap() {
-    const base = Object.fromEntries(LIST.map((m) => [m.key, m.on]));
-    return { ...base, ...(store(ON_KEY) || {}) };
+  /* ---------- Dados ---------- */
+
+  /** Converte o formato antigo (textos fixos + liga/desliga) na lista nova, uma vez */
+  function migrate() {
+    const oldText = store('corteza_mensagens_v1') || {};
+    const oldOn = store('corteza_automacoes') || {};
+    return DEFAULTS.map((m) => ({
+      ...m,
+      text: oldText[m.id] ?? m.text,
+      on: oldOn[m.id] ?? m.on,
+    }));
   }
-  const enabled = (key) => !!enabledMap()[key];
 
-  /** Troca {campo} pelos dados; campos sem valor ficam em branco */
+  function list() {
+    let l = store(KEY);
+    if (!l) { l = migrate(); store(KEY, l); }
+    return l;
+  }
+  const save = (l) => store(KEY, l);
+  const get = (id) => list().find((m) => m.id === id);
+
+  /** Troca {campo} pelos dados; campos desconhecidos ficam como estão */
   function fill(tpl, data) {
     const all = { barbeiro: CONFIG.barber, endereco: CONFIG.address, ...data };
     return tpl.replace(/\{(\w+)\}/g, (m, k) => (k in all ? String(all[k] ?? '') : m)).replace(/ {2,}/g, ' ').trim();
   }
 
-  /** Dados de um agendamento para preencher a mensagem */
   function bookingData(b) {
     return {
       nome: (b.name || '').split(' ')[0],
@@ -81,48 +80,116 @@ const Messages = (() => {
     };
   }
 
-  /** Link do WhatsApp do cliente com a mensagem escolhida (null se desligada ou sem telefone) */
-  function link(key, phone, data) {
-    if (!enabled(key) || !phone) return null;
-    return whatsUrl(fill(text(key), data), phone);
+  /** Mensagens ativas de um lugar */
+  const forPlace = (place) => list().filter((m) => m.on && m.place === place);
+
+  /**
+   * Botão "WhatsApp ▾" com as mensagens ativas do lugar.
+   * Uma só mensagem vira link direto; nenhuma = botão some.
+   */
+  function menu(place, phone, data, who = '') {
+    if (!phone) return '';
+    const msgs = forPlace(place);
+    if (!msgs.length) return '';
+    const label = who ? ` para ${esc(who)}` : '';
+    if (msgs.length === 1) {
+      const m = msgs[0];
+      return `<a class="icon-btn icon-btn--whats" href="${whatsUrl(fill(m.text, data), phone)}" target="_blank" rel="noopener" aria-label="${esc(m.title)}${label} pelo WhatsApp">${esc(m.title)}</a>`;
+    }
+    return `
+      <div class="wa-menu">
+        <button type="button" class="icon-btn icon-btn--whats" data-wa-menu aria-haspopup="true" aria-expanded="false">WhatsApp ▾</button>
+        <div class="wa-menu__list" role="menu" hidden>
+          ${msgs.map((m) => `<a role="menuitem" href="${whatsUrl(fill(m.text, data), phone)}" target="_blank" rel="noopener"><b>${esc(m.title)}</b><small>${esc(fill(m.text, data)).slice(0, 70)}…</small></a>`).join('')}
+        </div>
+      </div>`;
   }
 
   /* ---------- Tela de Automação ---------- */
   function render() {
-    const on = enabledMap();
-    $('#autoCount').textContent = `${Object.values(on).filter(Boolean).length} de ${LIST.length} ativas`;
-    $('#autoList').innerHTML = LIST.map((m) => `
-      <div class="msg-item ${on[m.key] ? 'is-on' : ''}" data-msg="${m.key}">
+    const l = list();
+    const active = l.filter((m) => m.on).length;
+    $('#autoCount').textContent = `${l.length} mensage${l.length === 1 ? 'm' : 'ns'} · ${active} ativa${active === 1 ? '' : 's'}`;
+
+    const editor = editing !== null ? editorHtml(editing ? get(editing) : null) : '';
+    $('#autoList').innerHTML = (editing === '' ? editor : '') + (l.length ? l.map((m) => editing === m.id ? editor : `
+      <div class="msg-item ${m.on ? 'is-on' : ''}" data-msg="${m.id}">
         <div class="msg-item__head">
           <div class="msg-item__txt">
-            <b>${m.title}${isCustom(m.key) ? ' <em class="msg-item__tag">sua mensagem</em>' : ''}</b>
-            <small>${m.where}</small>
+            <b>${esc(m.title)}</b>
+            <small class="msg-place msg-place--${m.place}">${PLACES[m.place].label}</small>
           </div>
-          <button class="msg-item__edit btn btn--text btn--sm" type="button" data-msg-edit="${m.key}" aria-expanded="false">Editar mensagem</button>
-          <button class="msg-switch ${on[m.key] ? 'is-on' : ''}" type="button" role="switch" aria-checked="${on[m.key]}" data-msg-toggle="${m.key}" aria-label="${m.title}">
+          <button class="btn btn--text btn--sm msg-item__edit" type="button" data-msg-edit="${m.id}">Editar</button>
+          <button class="msg-switch ${m.on ? 'is-on' : ''}" type="button" role="switch" aria-checked="${m.on}" data-msg-toggle="${m.id}" aria-label="Ativar ${esc(m.title)}">
             <span class="ai-switch__track" aria-hidden="true"><span class="ai-switch__thumb"></span></span>
           </button>
         </div>
-        <p class="msg-item__preview">${esc(fill(text(m.key), EXAMPLE))}</p>
-        <div class="msg-editor" hidden>
-          <label class="field field--full">
-            <span>Escreva com as suas palavras</span>
-            <textarea rows="4" maxlength="700" data-msg-text="${m.key}">${esc(text(m.key))}</textarea>
-          </label>
-          <div class="msg-vars">
-            <span>Inserir:</span>
-            ${VARS.map((v) => `<button type="button" class="msg-var" data-var="${v.key}" title="${v.label}">{${v.key}}</button>`).join('')}
+        <p class="msg-item__preview">${esc(fill(m.text, EXAMPLE))}</p>
+      </div>`).join('') : '<p class="empty">Nenhuma mensagem. Toque em “+ Nova mensagem”.</p>');
+  }
+
+  function editorHtml(m) {
+    const place = m ? m.place : 'agendado';
+    return `
+      <form class="msg-editor-card" id="msgForm" novalidate>
+        <h4 class="card-title">${m ? 'Editar mensagem' : 'Nova mensagem'}</h4>
+        <label class="field field--full">
+          <span>Nome da mensagem</span>
+          <input type="text" id="msgTitle" maxlength="40" placeholder="Ex.: Promoção de terça" value="${m ? esc(m.title) : ''}">
+        </label>
+        <div class="field field--full">
+          <span>Onde o botão aparece</span>
+          <div class="seg-chips" role="radiogroup">
+            ${Object.entries(PLACES).map(([k, p]) => `
+              <label class="seg-chip"><input type="radio" name="msgPlace" value="${k}" ${k === place ? 'checked' : ''}><span>${p.label}</span></label>`).join('')}
           </div>
-          <div class="msg-preview">
-            <small>Como o cliente vai receber</small>
-            <div class="msg-bubble" data-msg-preview="${m.key}">${esc(fill(text(m.key), EXAMPLE))}</div>
-          </div>
-          <div class="msg-editor__actions">
-            <button type="button" class="btn btn--text btn--sm" data-msg-reset="${m.key}">Voltar ao texto padrão</button>
-            <button type="button" class="btn btn--gold btn--sm" data-msg-save="${m.key}">Salvar mensagem</button>
-          </div>
+          <small class="muted" id="msgPlaceHint">${PLACES[place].hint}</small>
         </div>
-      </div>`).join('');
+        <label class="field field--full">
+          <span>Texto (com as suas palavras)</span>
+          <textarea id="msgText" rows="4" maxlength="700" placeholder="Ex.: Fala {nome}! Seu horário é {data} às {hora}.">${m ? esc(m.text) : ''}</textarea>
+        </label>
+        <div class="msg-vars">
+          <span>Inserir:</span>
+          ${VARS.map((v) => `<button type="button" class="msg-var" data-var="${v.key}" title="${v.label}">{${v.key}}</button>`).join('')}
+        </div>
+        <div class="msg-preview">
+          <small>Como o cliente vai receber</small>
+          <div class="msg-bubble" id="msgPreview">${m ? esc(fill(m.text, EXAMPLE)) : '…'}</div>
+        </div>
+        <div class="msg-editor__actions">
+          ${m ? `<button type="button" class="btn btn--text btn--sm msg-delete" data-msg-delete="${m.id}">Excluir mensagem</button>` : ''}
+          <span class="spacer"></span>
+          <button type="button" class="btn btn--text btn--sm" data-msg-cancel>Cancelar</button>
+          <button type="submit" class="btn btn--gold btn--sm">Salvar</button>
+        </div>
+      </form>`;
+  }
+
+  function openEditor(id) {
+    editing = id;
+    render();
+    const f = $('#msgForm');
+    f.scrollIntoView({ block: 'nearest' });
+    (id ? $('#msgText') : $('#msgTitle')).focus();
+  }
+
+  function closeEditor() { editing = null; render(); }
+
+  function submit(e) {
+    e.preventDefault();
+    const title = $('#msgTitle').value.trim();
+    const text = $('#msgText').value.trim();
+    const place = $('input[name="msgPlace"]:checked').value;
+    if (title.length < 2) { $('#msgTitle').focus(); return toast('Dê um nome para a mensagem'); }
+    if (text.length < 3) { $('#msgText').focus(); return toast('Escreva o texto da mensagem'); }
+    const l = list();
+    if (editing) Object.assign(l.find((m) => m.id === editing), { title, text, place });
+    else l.push({ id: 'msg-' + Date.now().toString(36), title, text, place, on: true });
+    save(l);
+    toast(editing ? 'Mensagem salva ✓' : 'Mensagem criada ✓');
+    closeEditor();
+    if (typeof refreshPanel === 'function') refreshPanel();
   }
 
   function insertAtCursor(ta, str) {
@@ -134,59 +201,84 @@ const Messages = (() => {
     ta.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
-  function init() {
-    const box = $('#autoList');
-    box.addEventListener('click', (e) => {
-      const item = e.target.closest('[data-msg]');
-      if (!item) return;
-      const key = item.dataset.msg;
-
-      if (e.target.closest('[data-msg-toggle]')) {
-        const on = enabledMap();
-        on[key] = !on[key];
-        store(ON_KEY, on);
-        render();
-        toast(on[key] ? 'Mensagem ativada' : 'Mensagem desativada');
-        if (typeof refreshPanel === 'function') refreshPanel();
-        return;
-      }
-      if (e.target.closest('[data-msg-edit]')) {
-        const ed = $('.msg-editor', item);
-        const open = ed.hidden;
-        ed.hidden = !open;
-        e.target.closest('[data-msg-edit]').setAttribute('aria-expanded', String(open));
-        e.target.closest('[data-msg-edit]').textContent = open ? 'Fechar' : 'Editar mensagem';
-        if (open) $('textarea', item).focus();
-        return;
-      }
-      const v = e.target.closest('[data-var]');
-      if (v) { insertAtCursor($('textarea', item), `{${v.dataset.var}}`); return; }
-
-      if (e.target.closest('[data-msg-save]')) {
-        const value = $('textarea', item).value.trim();
-        if (value.length < 3) return toast('Escreva a mensagem antes de salvar');
-        const all = saved();
-        all[key] = value;
-        store(TPL_KEY, all);
-        render();
-        toast('Mensagem salva ✓');
-        return;
-      }
-      if (e.target.closest('[data-msg-reset]')) {
-        $('textarea', item).value = def(key).text;
-        $('textarea', item).dispatchEvent(new Event('input', { bubbles: true }));
-        const all = saved();
-        delete all[key];
-        store(TPL_KEY, all);
-        toast('Texto padrão restaurado');
-      }
-    });
-    // Prévia ao vivo enquanto digita
-    box.addEventListener('input', (e) => {
-      const ta = e.target.closest('[data-msg-text]');
-      if (ta) $(`[data-msg-preview="${ta.dataset.msgText}"]`).textContent = fill(ta.value, EXAMPLE);
+  /* ---------- Menu "WhatsApp ▾" (agenda e fila) ---------- */
+  function closeMenus(except) {
+    $$('.wa-menu__list').forEach((l) => {
+      if (l === except) return;
+      l.hidden = true;
+      l.previousElementSibling.setAttribute('aria-expanded', 'false');
+      const host = l.closest('.pbk, .wl-row');
+      if (host) host.classList.remove('has-menu');
     });
   }
 
-  return { LIST, text, fill, link, bookingData, enabled, render, init };
+  function init() {
+    $('#msgNew').addEventListener('click', () => openEditor(''));
+    $('#msgRestore').addEventListener('click', () => {
+      if (!confirm('Trazer de volta as 5 mensagens padrão? As suas mensagens continuam na lista.')) return;
+      const l = list();
+      DEFAULTS.forEach((d) => { if (!l.some((m) => m.id === d.id)) l.push({ ...d }); });
+      save(l);
+      render();
+      toast('Mensagens padrão restauradas');
+    });
+
+    const box = $('#autoList');
+    box.addEventListener('click', (e) => {
+      const tog = e.target.closest('[data-msg-toggle]');
+      if (tog) {
+        const l = list();
+        const m = l.find((x) => x.id === tog.dataset.msgToggle);
+        m.on = !m.on;
+        save(l);
+        render();
+        toast(m.on ? 'Mensagem ativada' : 'Mensagem desativada');
+        if (typeof refreshPanel === 'function') refreshPanel();
+        return;
+      }
+      const ed = e.target.closest('[data-msg-edit]');
+      if (ed) return openEditor(ed.dataset.msgEdit);
+      if (e.target.closest('[data-msg-cancel]')) return closeEditor();
+      const del = e.target.closest('[data-msg-delete]');
+      if (del) {
+        const m = get(del.dataset.msgDelete);
+        if (!confirm(`Excluir a mensagem "${m.title}"?`)) return;
+        save(list().filter((x) => x.id !== m.id));
+        toast('Mensagem excluída');
+        closeEditor();
+        if (typeof refreshPanel === 'function') refreshPanel();
+        return;
+      }
+      const v = e.target.closest('[data-var]');
+      if (v) insertAtCursor($('#msgText'), `{${v.dataset.var}}`);
+    });
+    box.addEventListener('input', (e) => {
+      if (e.target.id === 'msgText') $('#msgPreview').textContent = fill(e.target.value, EXAMPLE) || '…';
+    });
+    box.addEventListener('change', (e) => {
+      if (e.target.name === 'msgPlace') $('#msgPlaceHint').textContent = PLACES[e.target.value].hint;
+    });
+    box.addEventListener('submit', submit);
+
+    // Abre/fecha os menus "WhatsApp ▾" em qualquer lugar do painel
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-wa-menu]');
+      if (btn) {
+        const l = btn.nextElementSibling;
+        const open = l.hidden;
+        closeMenus(l);
+        l.hidden = !open;
+        btn.setAttribute('aria-expanded', String(open));
+        // O card com o menu aberto fica por cima dos vizinhos
+        const host = btn.closest('.pbk, .wl-row');
+        if (host) host.classList.toggle('has-menu', open);
+        return;
+      }
+      if (e.target.closest('.wa-menu__list a')) { closeMenus(); return; }
+      if (!e.target.closest('.wa-menu')) closeMenus();
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenus(); });
+  }
+
+  return { list, fill, bookingData, menu, render, init };
 })();
