@@ -263,7 +263,7 @@ function barChart(title, bars) {
           ${b.current && b.value ? `<span class="chart__val">${brlCompact(b.value)}</span>` : ''}
         </div>
         <div class="chart__tip"><b>${brl(b.value)}</b>${b.full}</div>
-        <span class="chart__x">${b.label}</span>
+        <span class="chart__x"><span class="chart__x-long">${b.label}</span><span class="chart__x-short">${b.short || b.label}</span></span>
       </div>`;
   }).join('');
   const rows = bars.map((b) => `<tr><td>${b.full}</td><td>${brl(b.value)}</td></tr>`).join('');
@@ -314,6 +314,7 @@ function renderReport() {
     </div>`;
     html += barChart('Faturamento dos últimos 14 dias', days.map((d, i) => ({
       label: `${pad(d.d)}/${pad(d.m + 1)}`,
+      short: String(d.d),
       full: `${formatDateLong(d.iso)}${d.iso === today ? ' (hoje)' : ''}${!CONFIG.hours[d.dow] ? ' · fechado' : ''}`,
       value: vals[i], current: d.iso === today, closed: !CONFIG.hours[d.dow],
     })));
@@ -342,6 +343,7 @@ function renderReport() {
     })));
     html += barChart('Semana a semana (últimas 8)', weeks.map((w) => ({
       label: fmtShort(w),
+      short: String(+w.slice(8)),
       full: `Semana de ${fmtShort(w)} a ${fmtShort(addDays(w, 6).iso)}`,
       value: byWeek[w] || 0, current: w === cur,
     })));

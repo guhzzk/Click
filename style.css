@@ -838,6 +838,7 @@ img.fade-img.is-loaded { opacity: 1; }
 .chart__col:last-child .chart__val { left: auto; right: 0; transform: none; }
 .chart__col:first-child .chart__val { left: 0; transform: none; }
 .chart__col.is-closed .chart__x { opacity: .5; }
+.chart__x-short { display: none; }
 .chart__tip {
   position: absolute; bottom: calc(var(--h, 0%) + 26px); left: 50%; transform: translate(-50%, 6px); z-index: 3;
   background: var(--solid); color: #fff; font-size: .75rem; padding: 7px 10px; border-radius: 8px; white-space: nowrap;
@@ -871,7 +872,9 @@ img.fade-img.is-loaded { opacity: 1; }
   .rtiles { grid-template-columns: 1fr 1fr; }
   .rtile:first-child { grid-column: 1 / -1; }
   .chart__plot { margin-left: 44px; height: 160px; }
-  .chart__x { font-size: .6rem; }
+  .chart__x { font-size: .62rem; }
+  .chart__x-long { display: none; }
+  .chart__x-short { display: inline; }
   .chart__cols { gap: 1px; }
   .range { grid-template-columns: 1fr 1fr; }
 }
