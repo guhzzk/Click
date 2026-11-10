@@ -2,6 +2,7 @@
    Inicialização
    ========================================================== */
 document.addEventListener('DOMContentLoaded', () => {
+  try { localStorage.removeItem('corteza_encaixe'); } catch (e) { /* recurso removido */ }
   $('#year').textContent = new Date().getFullYear();
   $$('[data-whats]').forEach((a) => {
     a.href = whatsUrl('Olá! Vim pelo site da Corteza Barbearia e gostaria de mais informações. 💈');

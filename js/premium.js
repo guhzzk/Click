@@ -2,7 +2,6 @@
    Recursos premium (modo demonstração)
    1) Pix com confirmação automática (webhook simulado)
    2) Fila de espera para dias lotados
-   3) Encaixe Inteligente (painel do barbeiro)
 
    Tudo aqui é simulado no navegador para apresentar o upgrade.
    As simulações só rodam com CONFIG.demoMode = true.
@@ -233,59 +232,6 @@ const Waitlist = (() => {
   return { init, render, upcoming, remove, PERIOD };
 })();
 
-/* ==========================================================
-   3) ENCAIXE INTELIGENTE (painel do barbeiro)
-   ========================================================== */
-const SmartFit = (() => {
-  const KEY = 'corteza_encaixe';
-  const active = () => store(KEY) === true;
-
-  /** Brechas de 15 min sugeridas para a data do formulário */
-  function gaps(date) {
-    if (!date || !CONFIG.hours[addDays(date, 0).dow]) return [];
-    const [open, close] = CONFIG.hours[addDays(date, 0).dow];
-    const booked = DB.all().filter((b) => b.date === date && b.status !== 'cancelado' && b.kind === 'agendamento');
-    // Depois de cada atendimento, abre uma brecha 45 min após o início (corte recalculado)
-    let times = booked.map((b) => toMinutes(b.time) + 45);
-    if (times.length < 3) times = times.concat([10 * 60 + 45, 14 * 60 + 15, 17 * 60 + 45]);
-    return [...new Set(times)]
-      .filter((m) => m >= open * 60 && m <= close * 60 - 15 && !isPastSlot(date, m))
-      .sort((a, b) => a - b)
-      .slice(0, 3)
-      .map(toHHMM);
-  }
-
-  function render() {
-    const on = active();
-    const btn = $('#smartFitBtn');
-    btn.classList.toggle('is-on', on);
-    btn.setAttribute('aria-checked', String(on));
-    $('#smartFitState').textContent = on ? 'Ativado · recalculando tempos' : 'Desativado';
-    $('#smartFit').classList.toggle('is-on', on);
-
-    const box = $('#smartFitGaps');
-    const date = $('#nDate').value;
-    const list = on ? gaps(date) : [];
-    box.innerHTML = list.length
-      ? `<span>Brechas VIP abertas ${date ? 'em ' + formatDateLong(date) : ''}:</span>${list.map((t, i) => `<b class="gap-chip" style="--i:${i}">${t} <small>15 min</small></b>`).join('')}`
-      : (on ? '<span>Sem brechas possíveis nesta data.</span>' : '');
-  }
-
-  function toggle() {
-    store(KEY, !active());
-    toast(active() ? 'Encaixe Inteligente ativado ⚡' : 'Encaixe Inteligente desativado');
-    render();
-  }
-
-  function init() {
-    $('#smartFitBtn').addEventListener('click', toggle);
-    $('#nDate').addEventListener('change', render);
-    render();
-  }
-
-  return { init, render };
-})();
-
 /* ----------------------------------------------------------
    PAINEL: bloco da fila de espera na aba Agenda
    ---------------------------------------------------------- */
@@ -306,7 +252,6 @@ function renderWaitlistPanel() {
 
 function initPremium() {
   Waitlist.init();
-  SmartFit.init();
   $('#panelWaitlist').addEventListener('click', (e) => {
     const r = e.target.closest('[data-wl-remove]');
     if (!r) return;
