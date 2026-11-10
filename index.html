@@ -3,8 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Corteza Barbearia | Thomaz Coelho</title>
-  <meta name="description" content="Corteza Barbearia em Thomaz Coelho. Corte, barba, sobrancelha, combos e planos de assinatura Club Corteza. Agende online e confirme pelo WhatsApp.">
+  <title>Corteza Barbearia | Thomaz Coelho, Araucária - PR</title>
+  <meta name="description" content="Corteza Barbearia em Thomaz Coelho, Araucária - PR. Corte, barba, sobrancelha, combos e planos de assinatura Club Corteza. Agende online e confirme pelo WhatsApp.">
+  <!-- Dados estruturados: ajudam o Google a mostrar endereço e horário na busca e no Maps -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BarberShop",
+    "name": "Corteza Barbearia",
+    "description": "Barbearia em Thomaz Coelho, Araucária - PR. Corte, barba, sobrancelha e planos de assinatura.",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "R. Mieceslau Jasiocha, 66",
+      "addressLocality": "Araucária",
+      "addressRegion": "PR",
+      "postalCode": "83707-200",
+      "addressCountry": "BR"
+    },
+    "openingHoursSpecification": [
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": [
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday"
+        ],
+        "opens": "10:00",
+        "closes": "20:00"
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": "Saturday",
+        "opens": "09:00",
+        "closes": "20:00"
+      }
+    ],
+    "priceRange": "R$ 15 – R$ 90",
+    "currenciesAccepted": "BRL",
+    "paymentAccepted": "Pix, Dinheiro, Cartão"
+  }
+  </script>
   <meta name="theme-color" content="#EEEAE3">
   <!-- Tema antes da pintura: evita piscar claro ao abrir no escuro -->
   <script>
@@ -627,6 +666,17 @@
         <div id="reportBody"></div>
         <p class="fineprint">O faturamento soma o valor recebido de cada atendimento marcado como concluído, no dia em que foi concluído.</p>
       </div>
+            <div class="card-box backup-card" id="backupCard">
+              <div class="backup-card__txt">
+                <h4 class="card-title">Backup dos dados</h4>
+                <p class="muted">Agenda, financeiro, estoque, catálogo e mensagens ficam salvos só neste aparelho. Baixe um backup de vez em quando e guarde no Google Drive ou mande para você no WhatsApp.</p>
+                <small id="backupInfo"></small>
+              </div>
+              <div class="backup-card__actions">
+                <button class="btn btn--gold btn--sm" id="backupDown" type="button">⬇ Baixar backup</button>
+                <label class="btn btn--outline btn--sm backup-restore">⬆ Restaurar backup<input type="file" id="backupFile" accept="application/json,.json" hidden></label>
+              </div>
+            </div>
           </section>
 
           <!-- ================= AGENDA ================= -->
@@ -707,56 +757,46 @@
 
           <!-- ================= FINANCEIRO ================= -->
           <section class="admin-view" data-view-pane="financeiro" aria-label="Financeiro">
-            <div class="view-head view-head--row">
-              <h3 class="serif">Financeiro</h3>
-              <div class="fin-actions">
-                <button class="btn btn--gold" id="finNewOut" type="button">+ Despesa</button>
-                <button class="btn btn--outline btn--sm" id="finNewIn" type="button">+ Receita</button>
-                <button class="btn btn--text btn--sm" id="finExport" type="button">⬇ Exportar planilha</button>
+            <div class="money-top">
+              <div class="month-switch">
+                <button class="month-switch__btn" id="finPrev" type="button" aria-label="Mês anterior">‹</button>
+                <button class="month-switch__label" id="finMonth" type="button" title="Voltar para o mês atual"></button>
+                <button class="month-switch__btn" id="finNext" type="button" aria-label="Próximo mês">›</button>
               </div>
+              <button class="btn btn--text btn--sm" id="finExport" type="button">⬇ Planilha do mês</button>
             </div>
 
-            <div class="month-nav">
-              <button class="month-nav__btn" id="finPrev" type="button" aria-label="Mês anterior">‹</button>
-              <b id="finMonth"></b>
-              <button class="month-nav__btn" id="finNext" type="button" aria-label="Próximo mês">›</button>
+            <div class="money-hero" id="finHero"></div>
+
+            <div class="money-actions">
+              <button class="money-btn money-btn--out" id="finNewOut" type="button"><span>−</span>Saída</button>
+              <button class="money-btn money-btn--in" id="finNewIn" type="button"><span>+</span>Entrada</button>
             </div>
 
-            <div class="fin-cards" id="finCards"></div>
+            <div class="card-box money-due" id="finDue" hidden></div>
 
-            <div class="fin-quick">
-              <span>Lançar rápido:</span>
-              <div class="chips" id="finQuick"></div>
-            </div>
-
-            <form class="card-box erp-form" id="finForm" hidden novalidate>
-              <h4 class="card-title" id="finFormTitle">Nova despesa</h4>
-              <div class="erp-form__grid fin-form__grid">
-                <label class="field"><span>Tipo</span>
-                  <select id="fType"><option value="despesa">Despesa (saída)</option><option value="receita">Receita (entrada)</option></select>
-                </label>
-                <label class="field field--wide"><span>Descrição</span><input type="text" id="fDesc" maxlength="80" placeholder="Ex.: Aluguel do salão" required></label>
-                <label class="field"><span>Categoria</span><select id="fCat"></select></label>
-                <label class="field"><span>Valor (R$)</span><input type="text" id="fValue" inputmode="decimal" placeholder="0,00" required></label>
-                <label class="field"><span>Data</span><input type="date" id="fDate" required></label>
-                <label class="field"><span>Forma de pagamento</span><select id="fMethod"></select></label>
-                <label class="erp-check"><input type="checkbox" id="fPaid" checked><span id="fPaidLabel">Já está pago</span></label>
-                <label class="erp-check" id="fRecurringWrap"><input type="checkbox" id="fRecurring"><span>Conta fixa: repetir todo mês</span></label>
+            <div class="money-grid">
+              <div class="card-box money-statement">
+                <div class="money-statement__head">
+                  <h4 class="card-title">Extrato</h4>
+                  <div class="seg-mini" role="tablist" aria-label="Filtrar extrato">
+                    <button data-fin-filter="tudo" class="is-active">Tudo</button>
+                    <button data-fin-filter="entradas">Entradas</button>
+                    <button data-fin-filter="saidas">Saídas</button>
+                    <button data-fin-filter="pendentes">A pagar</button>
+                  </div>
+                </div>
+                <div id="finList"></div>
               </div>
-              <div class="erp-form__actions">
-                <button class="btn btn--text btn--sm" id="finCancel" type="button">Cancelar</button>
-                <button class="btn btn--gold" type="submit">Salvar lançamento</button>
-              </div>
-            </form>
-
-            <div class="fin-grid">
-              <div class="card-box">
-                <h4 class="card-title">Lançamentos do mês</h4>
-                <div class="ledger" id="finLedger"></div>
-              </div>
-              <div class="card-box">
-                <h4 class="card-title">Gastos por categoria</h4>
-                <div id="finCats"></div>
+              <div class="money-side">
+                <div class="card-box">
+                  <h4 class="card-title">Para onde foi o dinheiro</h4>
+                  <div id="finCats"></div>
+                </div>
+                <div class="card-box">
+                  <h4 class="card-title">Contas fixas</h4>
+                  <div id="finFixed"></div>
+                </div>
               </div>
             </div>
           </section>
@@ -820,7 +860,11 @@
             </div>
             <div class="card-box">
               <h4 class="card-title">Mensagens do WhatsApp <small id="autoCount"></small></h4>
-              <p class="muted msg-intro">Escreva cada mensagem do seu jeito. Os campos entre chaves, como {nome} e {hora}, são trocados pelos dados do cliente. Cada mensagem ativada vira um botão na agenda que abre o WhatsApp do cliente com o texto pronto.</p>
+              <p class="muted msg-intro">Crie as mensagens que quiser, com as suas palavras. Os campos entre chaves, como {nome} e {hora}, viram os dados do cliente. As mensagens ativas aparecem no botão “WhatsApp” da agenda e abrem a conversa com o texto pronto.</p>
+              <div class="msg-toolbar">
+                <button class="btn btn--gold" id="msgNew" type="button">+ Nova mensagem</button>
+                <button class="btn btn--text btn--sm" id="msgRestore" type="button">Restaurar mensagens padrão</button>
+              </div>
               <div class="msg-list" id="autoList"></div>
             </div>
           </section>
@@ -831,8 +875,57 @@
     </div>
   </div>
 
+  <!-- Lançamento financeiro (folha de baixo no celular) -->
+  <div class="modal modal--sheet modal--admin" id="finSheet" hidden>
+    <div class="modal__backdrop" data-close></div>
+    <form class="modal__card sheet" id="sForm" role="dialog" aria-modal="true" aria-labelledby="sTitle" novalidate>
+      <div class="sheet__grip" aria-hidden="true"></div>
+      <div class="sheet__head">
+        <h3 id="sTitle">Nova saída</h3>
+        <button class="modal__close" type="button" data-close aria-label="Fechar">×</button>
+      </div>
+      <div class="sheet__type" role="tablist" aria-label="Tipo de lançamento">
+        <button type="button" data-stype="despesa" class="is-active">− Saída</button>
+        <button type="button" data-stype="receita">+ Entrada</button>
+      </div>
+      <label class="sheet__value">
+        <span class="visually-hidden">Valor</span>
+        <input type="text" id="sValue" inputmode="numeric" autocomplete="off" value="R$ 0,00">
+      </label>
+      <div class="sheet__block">
+        <span class="sheet__label">Categoria</span>
+        <div class="cat-chips" id="sCats"></div>
+      </div>
+      <label class="sheet__block">
+        <span class="sheet__label">Descrição <em>(opcional)</em></span>
+        <input type="text" id="sDesc" maxlength="80" placeholder="Ex.: Aluguel de novembro">
+      </label>
+      <div class="sheet__block">
+        <span class="sheet__label">Quando</span>
+        <div class="mini-chips">
+          <button type="button" class="mini-chip" data-sdate="hoje">Hoje</button>
+          <button type="button" class="mini-chip" data-sdate="ontem">Ontem</button>
+          <button type="button" class="mini-chip" data-sdate="outra">Outra data</button>
+          <input type="date" id="sDate" hidden>
+        </div>
+      </div>
+      <div class="sheet__block">
+        <span class="sheet__label">Forma de pagamento</span>
+        <div class="mini-chips" id="sMethods"></div>
+      </div>
+      <div class="sheet__toggles">
+        <label class="toggle-line"><input type="checkbox" id="sPaid" checked><span id="sPaidLabel">Já paguei</span></label>
+        <label class="toggle-line" id="sRecurringWrap"><input type="checkbox" id="sRecurring"><span>Repetir todo mês (conta fixa)</span></label>
+      </div>
+      <div class="sheet__actions">
+        <button type="button" class="btn btn--text btn--sm sheet__delete" id="sDelete" hidden>Excluir</button>
+        <button type="submit" class="btn btn--gold sheet__save">Salvar</button>
+      </div>
+    </form>
+  </div>
+
   <!-- Concluir atendimento -->
-  <div class="modal" id="doneModal" hidden>
+  <div class="modal modal--admin" id="doneModal" hidden>
     <div class="modal__backdrop" data-close></div>
     <div class="modal__card modal__card--left" role="dialog" aria-modal="true" aria-labelledby="doneTitle">
       <button class="modal__close" data-close aria-label="Fechar">×</button>

@@ -299,10 +299,7 @@ function renderWaitlistPanel() {
     ${list.map((e) => `
       <div class="wl-row">
         <div><strong>${esc(e.name)}</strong><small>${formatDateLong(e.date)} · ${Waitlist.PERIOD[e.period]}</small></div>
-        ${(() => {
-          const href = Messages.link('fila', e.phone, { nome: e.name.split(' ')[0], data: formatDateLong(e.date), periodo: Waitlist.PERIOD[e.period].toLowerCase() });
-          return href ? `<a class="icon-btn icon-btn--whats" target="_blank" rel="noopener" href="${href}">Avisar vaga</a>` : '';
-        })()}
+        ${Messages.menu('fila', e.phone, { nome: e.name.split(' ')[0], data: formatDateLong(e.date), periodo: Waitlist.PERIOD[e.period].toLowerCase() }, e.name)}
         <button class="icon-btn" data-wl-remove="${e.id}" aria-label="Remover ${esc(e.name)} da fila">Remover</button>
       </div>`).join('')}`;
 }

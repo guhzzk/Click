@@ -24,7 +24,7 @@ function showView(view) {
   const p = $('#panel');
   if (p.scrollTop > 120) p.scrollTo({ top: 0, behavior: 'auto' });
 
-  if (view === 'geral') { renderPanelStats(); Overview.render(); renderReport(); }
+  if (view === 'geral') { renderPanelStats(); Overview.render(); renderReport(); Backup.renderInfo(); }
   if (view === 'agenda') { renderAgendaStatus(); showPanelTab(['agenda', 'novo'].includes(panel.tab) ? panel.tab : 'agenda'); }
   if (view === 'catalogo') Catalog.render();
   if (view === 'estoque') Stock.render();
@@ -407,6 +407,73 @@ function toggleForm(form, open) {
   if (!open) form.reset();
 }
 
+/* ==========================================================
+   BACKUP — baixar e restaurar todos os dados do painel
+   ========================================================== */
+const Backup = {
+  STAMP: 'corteza_ultimo_backup',
+  PREFIX: 'corteza_',
+
+  /** Chaves salvas pelo site (menos a sessão de login) */
+  keys() {
+    const out = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(this.PREFIX) && k !== 'corteza_sessao' && k !== this.STAMP) out.push(k);
+    }
+    return out.sort();
+  },
+
+  renderInfo() {
+    const last = store(this.STAMP);
+    const days = last ? Math.floor((Date.now() - Date.parse(last)) / 864e5) : null;
+    const late = days == null || days >= 7;
+    $('#backupCard').classList.toggle('is-late', late);
+    $('#backupInfo').textContent = days == null ? '⚠️ Você ainda não fez nenhum backup.'
+      : days === 0 ? '✓ Último backup: hoje.' : `${late ? '⚠️' : '✓'} Último backup: há ${days} dia${days === 1 ? '' : 's'}.`;
+  },
+
+  download() {
+    const data = {};
+    this.keys().forEach((k) => { data[k] = localStorage.getItem(k); });
+    const file = { app: 'corteza', version: 1, exportedAt: new Date().toISOString(), data };
+    const blob = new Blob([JSON.stringify(file, null, 1)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `corteza-backup-${nowLocal().iso}.json`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    store(this.STAMP, new Date().toISOString());
+    this.renderInfo();
+    toast('Backup baixado ✓ Guarde o arquivo num lugar seguro');
+  },
+
+  restore(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      let parsed;
+      try { parsed = JSON.parse(reader.result); } catch (e) { parsed = null; }
+      if (!parsed || parsed.app !== 'corteza' || typeof parsed.data !== 'object') return toast('Esse arquivo não é um backup da Corteza');
+      const when = parsed.exportedAt ? new Date(parsed.exportedAt).toLocaleDateString('pt-BR') : '?';
+      if (!confirm(`Restaurar o backup de ${when}?\nOs dados atuais deste aparelho serão substituídos.`)) return;
+      this.keys().forEach((k) => localStorage.removeItem(k));
+      Object.entries(parsed.data).forEach(([k, v]) => { if (k.startsWith(this.PREFIX) && typeof v === 'string') localStorage.setItem(k, v); });
+      toast('Backup restaurado ✓ Recarregando…');
+      setTimeout(() => location.reload(), 900);
+    };
+    reader.readAsText(file);
+  },
+
+  init() {
+    $('#backupDown').addEventListener('click', () => this.download());
+    $('#backupFile').addEventListener('change', (e) => {
+      if (e.target.files[0]) this.restore(e.target.files[0]);
+      e.target.value = '';
+    });
+  },
+};
+
 /* ----------------------------------------------------------
    INIT
    ---------------------------------------------------------- */
@@ -420,5 +487,6 @@ function initAdmin() {
   Stock.init();
   Finance.init();
   Messages.init();
+  Backup.init();
   renderNewServices();
 }
